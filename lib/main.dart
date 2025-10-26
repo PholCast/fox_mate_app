@@ -8,6 +8,7 @@ import 'package:fox_mate_app/constants/custom_colors.dart';
 // import 'package:fox_mate_app/presentation/wrappers/auth_wrapper.dart';
 import 'package:fox_mate_app/providers/theme_provider.dart';
 import 'package:fox_mate_app/themes/app_themes.dart';
+import 'package:fox_mate_app/presentation/wrappers/main_navigation_wrapper.dart';
 // import 'package:fox_mate_app/core/depenpencies_injection.dart';
 
 void main() {
@@ -34,7 +35,7 @@ class MyApp extends StatelessWidget {
           darkTheme: AppThemes.darkTheme,
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: const WelcomeScreen(),
+          home: const MainNavigationWrapper(),
         );
       },
     );
