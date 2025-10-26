@@ -8,6 +8,7 @@ import 'package:fox_mate_app/main.dart';
 import 'package:fox_mate_app/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fox_mate_app/presentation/screens/auth/signup_screen.dart';
+import 'package:fox_mate_app/presentation/wrappers/main_navigation_wrapper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -84,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: PrimaryButton(
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const MyHomePage(title:'Mi Inicio')),
+                      MaterialPageRoute(builder: (_) => const MainNavigationWrapper()),
                     ),
                     title: 'Iniciar Sesión',
                     verticalPadding: 18,
