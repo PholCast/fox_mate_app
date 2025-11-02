@@ -104,16 +104,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       side: BorderSide(color: Theme.of(context).colorScheme.tertiary, width: 1.5),  // Borde azul de 2 de grosor
                       backgroundColor: Colors.transparent,  // Fondo transparente
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-
-                      children: [
-                        SvgPicture.asset('assets/icons/microsoft-icon.svg', width: 25, height: 35),
-                        SizedBox(width:Spacing.space),
-                        Text('Iniciar sesión con Microsoft', style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800
-                        ),),
-                      ],
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                      
+                        children: [
+                          SvgPicture.asset('assets/icons/microsoft-icon.svg', width: 25, height: 35),
+                          SizedBox(width:Spacing.space),
+                          Text('Iniciar sesión con Microsoft', style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800
+                          ),),
+                        ],
+                      ),
                     ),
           
                   ),
