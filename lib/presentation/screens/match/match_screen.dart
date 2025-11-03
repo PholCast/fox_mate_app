@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
 import 'package:fox_mate_app/data/models/user_model.dart';
+import 'dart:ui';
+//import 'dart:math' as math;
 
 class MatchScreen extends StatefulWidget {
   const MatchScreen({super.key});
@@ -10,7 +12,7 @@ class MatchScreen extends StatefulWidget {
   State<MatchScreen> createState() => _MatchScreenState();
 }
 
-class _MatchScreenState extends State<MatchScreen> {
+class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin {
   List<UserProfile> allUsers = getDummyUsers();
   List<UserProfile> filteredUsers = [];
   int currentIndex = 0;
@@ -19,10 +21,25 @@ class _MatchScreenState extends State<MatchScreen> {
   String? selectedSemester;
   String? selectedInterest;
 
+  // Variables para el swipe
+  Offset dragPosition = Offset.zero;
+  bool isDragging = false;
+  AnimationController? _swipeAnimationController;
+
   @override
   void initState() {
     super.initState();
     filteredUsers = List.from(allUsers);
+    _swipeAnimationController = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _swipeAnimationController?.dispose();
+    super.dispose();
   }
 
   Set<String> getAllCareers() {
@@ -264,15 +281,169 @@ class _MatchScreenState extends State<MatchScreen> {
     );
   }
 
-  void nextUser() {
+  void _handleSwipe(bool isLike) {
+    if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
+
+    final currentUser = filteredUsers[currentIndex];
+    
     setState(() {
       if (currentIndex < filteredUsers.length - 1) {
         currentIndex++;
       } else {
-        // Volver al inicio o mostrar mensaje de que no hay más usuarios
         currentIndex = 0;
       }
+      dragPosition = Offset.zero;
+      isDragging = false;
     });
+
+    if (isLike) {
+      _showMatchDialog(currentUser);
+    }
+  }
+
+  void _showMatchDialog(UserProfile matchedUser) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.zero,
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 30),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '¡Nuevo Match!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'A ti y a ${matchedUser.name.split(' ')[0]} les gusta el perfil del otro.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                  
+                  // Avatar con corazón
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 140,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 4,
+                          ),
+                          image: DecorationImage(
+                            image: NetworkImage(matchedUser.imageUrl),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: CustomColors.primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 3,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.favorite,
+                            color: Colors.white,
+                            size: 25,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 30),
+                  
+                  // Botón Enviar mensaje
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Aquí iría la navegación al chat
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CustomColors.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Enviar mensaje',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  SizedBox(height: 12),
+                  
+                  // Botón Seguir buscando
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        foregroundColor: Colors.black87,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Seguir buscando',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -333,7 +504,7 @@ class _MatchScreenState extends State<MatchScreen> {
             child: Padding(
               padding: EdgeInsets.all(Spacing.padding),
               child: hasUsers && currentUser != null
-                  ? _buildProfileCard(currentUser)
+                  ? _buildSwipeableCard(currentUser)
                   : Center(
                       child: Text(
                         'No hay más usuarios con estos filtros',
@@ -350,16 +521,59 @@ class _MatchScreenState extends State<MatchScreen> {
     );
   }
 
+  Widget _buildSwipeableCard(UserProfile user) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final threshold = screenWidth * 0.3;
+    
+    return GestureDetector(
+      onPanStart: (details) {
+        setState(() {
+          isDragging = true;
+        });
+      },
+      onPanUpdate: (details) {
+        setState(() {
+          dragPosition += details.delta;
+        });
+      },
+      onPanEnd: (details) {
+        if (dragPosition.dx.abs() > threshold) {
+          // Swipe significativo
+          if (dragPosition.dx > 0) {
+            // Swipe a la derecha (like)
+            _handleSwipe(true);
+          } else {
+            // Swipe a la izquierda (dislike)
+            _handleSwipe(false);
+          }
+        } else {
+          // Volver a la posición original
+          setState(() {
+            dragPosition = Offset.zero;
+            isDragging = false;
+          });
+        }
+      },
+      child: Transform.translate(
+        offset: dragPosition,
+        child: Transform.rotate(
+          angle: dragPosition.dx / 1000,
+          child: _buildProfileCard(user),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterButton(String label, VoidCallback onTap, bool isSelected) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? CustomColors.secondaryColor : Colors.white,
+          color: isSelected ? Color(0xFFFFE4E6) : Colors.white,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
-            color: isSelected ? CustomColors.secondaryColor : Colors.grey[300]!,
+            color: isSelected ? Colors.transparent : Colors.grey[300]!,
             width: 1.5,
           ),
         ),
@@ -370,7 +584,7 @@ class _MatchScreenState extends State<MatchScreen> {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
+                  color: isSelected ? CustomColors.primaryColor : Colors.black87,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -381,7 +595,7 @@ class _MatchScreenState extends State<MatchScreen> {
             Icon(
               Icons.keyboard_arrow_down,
               size: 18,
-              color: isSelected ? Colors.white : Colors.black87,
+              color: isSelected ? CustomColors.primaryColor : Colors.black87,
             ),
           ],
         ),
@@ -499,9 +713,8 @@ class _MatchScreenState extends State<MatchScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Botón X
                         GestureDetector(
-                          onTap: nextUser,
+                          onTap: () => _handleSwipe(false),
                           child: Container(
                             width: 65,
                             height: 65,
@@ -524,10 +737,8 @@ class _MatchScreenState extends State<MatchScreen> {
                           ),
                         ),
                         SizedBox(width: 30),
-
-                        // Botón corazón
                         GestureDetector(
-                          onTap: nextUser,
+                          onTap: () => _handleSwipe(true),
                           child: Container(
                             width: 70,
                             height: 70,

@@ -3,6 +3,7 @@ import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/presentation/screens/home/post_screen.dart';
 import 'package:fox_mate_app/presentation/screens/home/events_screen.dart';
 import 'package:fox_mate_app/presentation/screens/match/match_screen.dart';
+import 'package:fox_mate_app/presentation/screens/chat/chats.screen.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
   const MainNavigationWrapper({super.key});
@@ -19,7 +20,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     PostScreen(),
     EventsScreen(),
     MatchScreen(),
-    Center(child: Text('Chats', style: TextStyle(fontSize: 24))),
+    ChatsScreen(),
     Center(child: Text('Perfil', style: TextStyle(fontSize: 24))),
   ];
 
