@@ -6,6 +6,8 @@ class UserProfile {
   final String semester;
   final String imageUrl;
   final List<String> interests;
+  final String? email;
+  final String? bio;
 
   UserProfile({
     required this.id,
@@ -15,7 +17,33 @@ class UserProfile {
     required this.semester,
     required this.imageUrl,
     required this.interests,
+    this.email,
+    this.bio,
   });
+
+  UserProfile copyWith({
+    String? id,
+    String? name,
+    int? age,
+    String? career,
+    String? semester,
+    String? imageUrl,
+    List<String>? interests,
+    String? email,
+    String? bio,
+  }) {
+    return UserProfile(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      career: career ?? this.career,
+      semester: semester ?? this.semester,
+      imageUrl: imageUrl ?? this.imageUrl,
+      interests: interests ?? this.interests,
+      email: email ?? this.email,
+      bio: bio ?? this.bio,
+    );
+  }
 }
 
 List<UserProfile> getDummyUsers() {
@@ -66,4 +94,18 @@ List<UserProfile> getDummyUsers() {
       interests: ['Fotografía', 'Redes Sociales', 'Arte'],
     ),
   ];
+}
+
+UserProfile getCurrentUser() {
+  return UserProfile(
+    id: 'current_user',
+    name: 'Sofia Rodriguez',
+    age: 20,
+    career: 'Diseño Gráfico',
+    semester: '4° Semestre',
+    imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800',
+    interests: ['Música', 'Deportes', 'Cine', 'Tecnología', 'Arte'],
+    email: 's.rodriguez@soyudemedellin.edu.co',
+    bio: 'Apasionada por la ilustración digital y el branding. En mi tiempo libre me gusta salir a correr y leer novelas de ciencia ficción. Me encanta conocer personas que compartan mis intereses y proyectar nuevas ideas.',
+  );
 }
