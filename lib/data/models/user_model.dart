@@ -1,68 +1,113 @@
-class UserProfile {
-  final String id;
-  final String name;
-  final int age;
-  final String career;
-  final String semester;
-  final String imageUrl;
-  final List<String> interests;
+import 'package:fox_mate_app/domain/entities/user_entity.dart';
 
-  UserProfile({
-    required this.id,
-    required this.name,
-    required this.age,
-    required this.career,
-    required this.semester,
-    required this.imageUrl,
-    required this.interests,
+class UserModel extends UserEntity {
+
+  const UserModel({
+    required super.id,
+    required super.name,
+    required super.email,
+    super.age = 0,
+    super.career = '',
+    super.semester = 0,
+    super.imageUrl,
+    super.interests = const [],
   });
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      age: json['age'] ?? 0,
+      career: json['career'] ?? '',
+      semester: json['semester'] ?? 0,
+      imageUrl: json['imageUrl'],
+      interests: List<String>.from(json['interests'] ?? []),
+      email: json['email'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'age': age,
+      'career': career,
+      'semester': semester,
+      'imageUrl': imageUrl,
+      'interests': interests,
+    };
+  }
+
+  factory UserModel.fromEntity(UserEntity user) {
+    return UserModel(
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      age: user.age,
+      career: user.career,
+      semester: user.semester,
+      imageUrl: user.imageUrl,
+      interests: user.interests,
+    );
+  }
 }
 
-List<UserProfile> getDummyUsers() {
+List<UserModel> getDummyUsers() {
   return [
-    UserProfile(
+    const UserModel(
+      email: 'user@email.com',
       id: '1',
       name: 'Ana García',
       age: 20,
       career: 'Diseño Gráfico',
-      semester: '4° semestre',
-      imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800',
+      semester: 4,
+      imageUrl:
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800',
       interests: ['Fotografía', 'Cine', 'Senderismo'],
     ),
-    UserProfile(
+    const UserModel(
+      email: 'user@email.com',
       id: '2',
       name: 'Carlos Mendoza',
       age: 22,
       career: 'Ingeniería de Sistemas',
-      semester: '6° semestre',
-      imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+      semester: 6,
+      imageUrl:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
       interests: ['Programación', 'Videojuegos', 'Música'],
     ),
-    UserProfile(
+    const UserModel(
+      email: 'user@email.com',
       id: '3',
       name: 'Laura Rodríguez',
       age: 21,
       career: 'Psicología',
-      semester: '5° semestre',
-      imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800',
+      semester: 5,
+      imageUrl:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800',
       interests: ['Lectura', 'Yoga', 'Café'],
     ),
-    UserProfile(
+    const UserModel(
+      email: 'user@email.com',
       id: '4',
       name: 'Daniel Torres',
       age: 23,
       career: 'Administración de Empresas',
-      semester: '7° semestre',
-      imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
+      semester: 7,
+      imageUrl:
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
       interests: ['Emprendimiento', 'Deportes', 'Networking'],
     ),
-    UserProfile(
+    const UserModel(
+      email: 'user@email.com',
       id: '5',
       name: 'Valentina Silva',
       age: 19,
       career: 'Comunicación Social',
-      semester: '3° semestre',
-      imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
+      semester: 3,
+      imageUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
       interests: ['Fotografía', 'Redes Sociales', 'Arte'],
     ),
   ];

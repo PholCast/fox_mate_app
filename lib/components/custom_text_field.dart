@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
-import 'package:fox_mate_app/constants/spacing.dart';
 
 class CustomTextField extends StatefulWidget {
   CustomTextField({
