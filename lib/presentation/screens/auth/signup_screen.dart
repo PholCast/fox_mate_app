@@ -6,6 +6,7 @@ import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
 import 'package:fox_mate_app/presentation/screens/auth/login_screen.dart';
 import 'package:fox_mate_app/presentation/screens/home/post_screen.dart';
+import 'package:fox_mate_app/presentation/wrappers/auth_wrapper.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -20,8 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -54,7 +54,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => PostScreen()),
+          MaterialPageRoute(builder: (context) => AuthWrapper()),
         );
       });
     }

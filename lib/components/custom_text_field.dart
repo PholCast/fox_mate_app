@@ -80,6 +80,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
               borderRadius: BorderRadius.circular(22),
               borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
             ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(22),
+              borderSide: BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(22),
+              borderSide: BorderSide(color: Colors.red, width: 2),
+            ),
             suffixIcon:
                 widget.isPassword
                     ? Padding(

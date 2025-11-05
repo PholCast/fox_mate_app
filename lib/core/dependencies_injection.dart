@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fox_mate_app/data/repositories/navigation_repository_impl.dart';
+import 'package:fox_mate_app/domain/repositories/navigation_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:fox_mate_app/data/repositories/auth_repository_impl.dart';
-//import 'package:fox_mate_app/data/repositories/navigation_repository_impl.dart';
 //import 'package:fox_mate_app/data/repositories/notifications_repository_impl.dart';
 import 'package:fox_mate_app/data/repositories/user_repository_impl.dart';
 import 'package:fox_mate_app/domain/repositories/auth_repository.dart';
-//import 'package:fox_mate_app/domain/repositories/navigation_repository.dart';
 //import 'package:fox_mate_app/domain/repositories/notifications_repository.dart';
 import 'package:fox_mate_app/domain/repositories/user_repository.dart';
 //import 'package:fox_mate_app/domain/usecases/get_notifications.dart';
@@ -19,7 +19,7 @@ import 'package:fox_mate_app/domain/usecases/sign_out_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/sign_up_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/update_profile_usecase.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart' as auth_provider;
-//import 'package:fox_mate_app/providers/navigation_provider.dart';
+import 'package:fox_mate_app/providers/navigation_provider.dart';
 //import 'package:fox_mate_app/providers/notifications_provider.dart';
 import 'package:fox_mate_app/providers/theme_provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -34,8 +34,8 @@ class DependenciesInjection {
     // Repositories
     final AuthRepository authRepository = AuthRepositoryImpl(firebaseAuth);
     final UserRepository userRepository = UserRepositoryImpl(firebaseFirestore);
-    // final NavigationRepository navigationRepository =
-    //     NavigationRepositoryImpl();
+    final NavigationRepository navigationRepository =
+        NavigationRepositoryImpl();
 
 
     // final NotificationsRepository notificationsRepository =
@@ -80,9 +80,9 @@ class DependenciesInjection {
             ),
       ),
 
-      // ChangeNotifierProvider(
-      //   create: (context) => NavigationProvider(navigationRepository),
-      // ),
+      ChangeNotifierProvider(
+        create: (context) => NavigationProvider(navigationRepository),
+      ),
 
       // ChangeNotifierProvider(
       //   create: (context) => UserProvider(updateProfileUseCase, userRepository),

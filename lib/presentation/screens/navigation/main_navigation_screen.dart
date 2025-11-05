@@ -20,20 +20,6 @@ class MainNavigationScreen extends StatelessWidget {
                     .map((item) => item.screen)
                     .toList(),
           ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PostScreen()),
-              );
-            },
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            shape: const CircleBorder(),
-            child: const Icon(Icons.add, size: 28, color: Colors.white),
-          ),
-
           bottomNavigationBar: CustomBottomNavigationBar(),
         );
       },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fox_mate_app/presentation/screens/auth/welcome_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:fox_mate_app/presentation/screens/auth/login_screen.dart';
 import 'package:fox_mate_app/presentation/screens/navigation/main_navigation_screen.dart';
@@ -26,7 +27,7 @@ class AuthWrapper extends StatelessWidget {
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
           print(AuthStatus.error);
-            targetScreen = LoginScreen();
+            targetScreen = WelcomeScreen();
             break;
         }
 

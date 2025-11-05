@@ -3,6 +3,8 @@ import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
 import 'package:fox_mate_app/data/models/post_model.dart';
 import 'package:fox_mate_app/presentation/screens/create/create_post_screen.dart';
+import 'package:fox_mate_app/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class PostScreen extends StatefulWidget {
   const PostScreen({super.key});
@@ -159,15 +161,29 @@ class _PostScreenState extends State<PostScreen> {
           ),
         ),
         actions: [
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              return IconButton(
+                icon: const Icon(
+                  Icons.logout_outlined,
+                  color: CustomColors.primaryColor,
+                  size: 30,
+                  weight: 700,
+                ),
+                onPressed: () async {
+                  await authProvider.signOut();
+                },
+              );
+            },
+          ),
           IconButton(
-            icon: Container(
-              child: Icon(
+            icon: Icon(
                 Icons.add_circle_outline_sharp,
                 color: CustomColors.primaryColor,
                 size: 30,
                 weight: 700,
               ),
-            ),
+            
             onPressed: () {
               Navigator.push(
                 context,

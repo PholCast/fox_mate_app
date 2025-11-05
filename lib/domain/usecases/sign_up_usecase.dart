@@ -23,7 +23,7 @@ class SignUpUsecase {
     }
 
     if (!isValidEmail(email)) {
-      return AuthResult.failure('Please enter a valid email address');
+      return AuthResult.failure('Por favor ingresa tu correo institucional válido');
     }
 
     if (password.length < 6) {

@@ -22,7 +22,7 @@ class UpdateProfileUseCase {
       }
 
       if (!isValidEmail(email)) {
-        return 'Please enter a valid email address';
+        return 'Por favor ingresa tu correo institucional válido';
       }
 
       final updatedUser = user.copyWith(name: name, email: email);

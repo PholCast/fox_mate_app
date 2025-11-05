@@ -16,7 +16,7 @@ class SignInUsecase {
     }
 
     if(!isValidEmail(email)){
-      return AuthResult.failure('Please enter a valid email address');
+      return AuthResult.failure('Por favor ingresa tu correo institucional válido');
     }
 
     return _authRepository.signIn(email, password);
