@@ -6,7 +6,7 @@ import 'package:fox_mate_app/data/models/user_model.dart';
 import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  final UserProfile user;
+  final UserModel user;
 
   const EditProfileScreen({super.key, required this.user});
 
@@ -29,7 +29,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     nameController = TextEditingController(text: widget.user.name);
     careerController = TextEditingController(text: widget.user.career);
-    semesterController = TextEditingController(text: widget.user.semester);
+    semesterController = TextEditingController(
+      text: widget.user.semester.toString(),
+    );
     bioController = TextEditingController(text: widget.user.bio ?? '');
     interests = List.from(widget.user.interests);
   }
@@ -84,7 +86,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final updatedUser = widget.user.copyWith(
       name: nameController.text,
       career: careerController.text,
-      semester: semesterController.text,
+      semester: int.parse(semesterController.text),
       bio: bioController.text,
       interests: interests,
     );
@@ -139,17 +141,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                             )
                           : ClipOval(
-                              child: Image.network(
-                                widget.user.imageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.grey[400],
-                                  );
-                                },
-                              ),
+                              child:
+                                  widget.user.imageUrl != null &&
+                                      widget.user.imageUrl!.isNotEmpty
+                                  ? Image.network(
+                                      widget.user.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Image.asset(
+                                              'assets/images/blue-circle.jpg',
+                                            );
+                                          },
+                                    )
+                                  : Image.asset(
+                                      'assets/images/blue-circle.jpg',
+                                    ),
                             ),
                     ),
                     Positioned(
@@ -161,10 +168,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         decoration: BoxDecoration(
                           color: CustomColors.primaryColor,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 3,
-                          ),
+                          border: Border.all(color: Colors.white, width: 3),
                         ),
                         child: Icon(
                           Icons.camera_alt,
@@ -177,9 +181,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
             ),
-            
+
             SizedBox(height: 12),
-            
+
             Center(
               child: GestureDetector(
                 onTap: _pickImage,
@@ -193,16 +197,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
             ),
-            
+
             SizedBox(height: 32),
-            
+
             // Nombre y Apellidos
             Text(
               'Nombre y Apellidos',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 8),
             TextField(
@@ -222,19 +223,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Carrera
             Text(
               'Carrera',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 8),
             TextField(
@@ -254,19 +255,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Año de estudio
             Text(
               'Año de estudio',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 8),
             TextField(
@@ -286,19 +287,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Sobre mí
             Text(
               'Sobre mí',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 8),
             TextField(
@@ -322,19 +323,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 contentPadding: EdgeInsets.all(16),
               ),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Intereses
             Text(
               'Intereses',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 12),
-            
+
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -370,7 +368,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   );
                 }).toList(),
-                
+
                 // Botón Añadir
                 GestureDetector(
                   onTap: () {
@@ -385,11 +383,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.add,
-                          size: 18,
-                          color: Colors.black87,
-                        ),
+                        Icon(Icons.add, size: 18, color: Colors.black87),
                         SizedBox(width: 4),
                         Text(
                           'Añadir',
@@ -405,9 +399,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ],
             ),
-            
+
             SizedBox(height: 40),
-            
+
             // Botón Guardar cambios
             SizedBox(
               width: double.infinity,
@@ -424,14 +418,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 child: Text(
                   'Guardar cambios',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
-            
+
             SizedBox(height: 40),
           ],
         ),
@@ -446,10 +437,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return AlertDialog(
           title: Text(
             'Añadir interés',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           content: TextField(
             controller: newInterestController,

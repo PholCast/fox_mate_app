@@ -12,11 +12,12 @@ class MatchScreen extends StatefulWidget {
   State<MatchScreen> createState() => _MatchScreenState();
 }
 
-class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin {
+class _MatchScreenState extends State<MatchScreen>
+    with TickerProviderStateMixin {
   List<UserModel> allUsers = getDummyUsers();
   List<UserModel> filteredUsers = [];
   int currentIndex = 0;
-  
+
   String? selectedCareer;
   String? selectedSemester;
   String? selectedInterest;
@@ -61,13 +62,17 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
   void applyFilters() {
     setState(() {
       filteredUsers = allUsers.where((user) {
-        bool matchesCareer = selectedCareer == null || user.career == selectedCareer;
-        bool matchesSemester = selectedSemester == null || user.semester == selectedSemester;
-        bool matchesInterest = selectedInterest == null || user.interests.contains(selectedInterest);
-        
+        bool matchesCareer =
+            selectedCareer == null || user.career == selectedCareer;
+        bool matchesSemester =
+            selectedSemester == null || user.semester == selectedSemester;
+        bool matchesInterest =
+            selectedInterest == null ||
+            user.interests.contains(selectedInterest);
+
         return matchesCareer && matchesSemester && matchesInterest;
       }).toList();
-      
+
       currentIndex = 0;
     });
   }
@@ -129,10 +134,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                   IconButton(
                     icon: Icon(Icons.close),
@@ -238,10 +240,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
         decoration: BoxDecoration(
           color: isSelected ? Color(0xFFFFE4E6) : Colors.grey[100],
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(
-            color: Colors.transparent,
-            width: 1,
-          ),
+          border: Border.all(color: Colors.transparent, width: 1),
         ),
         child: Text(
           label,
@@ -255,7 +254,11 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildFilterOptionList(String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildFilterOptionList(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -264,10 +267,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
         decoration: BoxDecoration(
           color: isSelected ? Color(0xFFFFE4E6) : Colors.grey[100],
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(
-            color: Colors.transparent,
-            width: 1,
-          ),
+          border: Border.all(color: Colors.transparent, width: 1),
         ),
         child: Text(
           label,
@@ -285,7 +285,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
     if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
 
     final currentUser = filteredUsers[currentIndex];
-    
+
     setState(() {
       if (currentIndex < filteredUsers.length - 1) {
         currentIndex++;
@@ -301,7 +301,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
     }
   }
 
-  void _showMatchDialog(UserProfile matchedUser) {
+  void _showMatchDialog(UserModel matchedUser) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -331,13 +331,10 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                   Text(
                     'A ti y a ${matchedUser.name.split(' ')[0]} les gusta el perfil del otro.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   SizedBox(height: 30),
-                  
+
                   // Avatar con corazón
                   Stack(
                     alignment: Alignment.center,
@@ -347,16 +344,23 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                         height: 140,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 4,
-                          ),
-                          image: DecorationImage(
-                            image: NetworkImage(matchedUser.imageUrl),
-                            fit: BoxFit.cover,
-                          ),
+                          border: Border.all(color: Colors.white, width: 4),
+                          image:
+                              matchedUser.imageUrl != null &&
+                                  matchedUser.imageUrl!.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(matchedUser.imageUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : const DecorationImage(
+                                  image: AssetImage(
+                                    'assets/images/blue-circle.jpg',
+                                  ),
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                       ),
+
                       Positioned(
                         bottom: 0,
                         right: 0,
@@ -366,10 +370,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                           decoration: BoxDecoration(
                             color: CustomColors.primaryColor,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 3,
-                            ),
+                            border: Border.all(color: Colors.white, width: 3),
                           ),
                           child: Icon(
                             Icons.favorite,
@@ -380,9 +381,9 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: 30),
-                  
+
                   // Botón Enviar mensaje
                   SizedBox(
                     width: double.infinity,
@@ -409,9 +410,9 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: 12),
-                  
+
                   // Botón Seguir buscando
                   SizedBox(
                     width: double.infinity,
@@ -448,7 +449,8 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    final hasUsers = filteredUsers.isNotEmpty && currentIndex < filteredUsers.length;
+    final hasUsers =
+        filteredUsers.isNotEmpty && currentIndex < filteredUsers.length;
     final currentUser = hasUsers ? filteredUsers[currentIndex] : null;
 
     return Scaffold(
@@ -471,7 +473,10 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
       body: Column(
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: Spacing.padding, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: Spacing.padding,
+              vertical: 12,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -508,10 +513,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                   : Center(
                       child: Text(
                         'No hay más usuarios con estos filtros',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ),
             ),
@@ -521,10 +523,10 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildSwipeableCard(UserProfile user) {
+  Widget _buildSwipeableCard(UserModel user) {
     final screenWidth = MediaQuery.of(context).size.width;
     final threshold = screenWidth * 0.3;
-    
+
     return GestureDetector(
       onPanStart: (details) {
         setState(() {
@@ -584,7 +586,9 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
               child: Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? CustomColors.primaryColor : Colors.black87,
+                  color: isSelected
+                      ? CustomColors.primaryColor
+                      : Colors.black87,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -621,24 +625,32 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
           fit: StackFit.expand,
           children: [
             user.imageUrl != null && user.imageUrl!.isNotEmpty
-            ? Image.network(
-              user.imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey[300],
-                  child: Center(
-                    child: Icon(Icons.person, size: 100, color: Colors.grey[500]),
+                ? Image.network(
+                    user.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[300],
+                        child: Center(
+                          child: Icon(
+                            Icons.person,
+                            size: 100,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : Container(
+                    color: Colors.grey[300],
+                    child: Center(
+                      child: Icon(
+                        Icons.person,
+                        size: 100,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                   ),
-                );
-              },
-            )
-            : Container(
-                  color: Colors.grey[300],
-                  child: Center(
-                    child: Icon(Icons.person, size: 100, color: Colors.grey[500]),
-                  ),
-                ),
             Positioned(
               bottom: 0,
               left: 0,
@@ -649,10 +661,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.7),
-                    ],
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                   ),
                 ),
               ),
@@ -678,10 +687,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                     SizedBox(height: 4),
                     Text(
                       '${user.career}, ${user.semester}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                     SizedBox(height: 12),
                     Wrap(
@@ -689,7 +695,10 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                       runSpacing: 8,
                       children: user.interests.map((interest) {
                         return Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(20),
@@ -754,7 +763,9 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: CustomColors.primaryColor.withOpacity(0.3),
+                                  color: CustomColors.primaryColor.withOpacity(
+                                    0.3,
+                                  ),
                                   blurRadius: 15,
                                   offset: Offset(0, 5),
                                 ),
