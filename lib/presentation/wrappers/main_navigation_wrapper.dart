@@ -3,7 +3,7 @@ import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/presentation/screens/home/post_screen.dart';
 import 'package:fox_mate_app/presentation/screens/home/events_screen.dart';
 import 'package:fox_mate_app/presentation/screens/match/match_screen.dart';
-import 'package:fox_mate_app/presentation/screens/chat/chats.screen.dart';
+import 'package:fox_mate_app/presentation/screens/chat/chats_screen.dart';
 import 'package:fox_mate_app/presentation/screens/profile/profile_screen.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
