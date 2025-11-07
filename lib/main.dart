@@ -1,20 +1,21 @@
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/components/custom_text_field.dart';
-import 'package:fox_mate_app/presentation/screens/auth/welcome_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:fox_mate_app/components/primary_button.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
-// import 'package:fox_mate_app/presentation/wrappers/auth_wrapper.dart';
+import 'package:fox_mate_app/presentation/wrappers/auth_wrapper.dart';
 import 'package:fox_mate_app/providers/theme_provider.dart';
 import 'package:fox_mate_app/themes/app_themes.dart';
-import 'package:fox_mate_app/presentation/wrappers/main_navigation_wrapper.dart';
-// import 'package:fox_mate_app/core/depenpencies_injection.dart';
+import 'package:fox_mate_app/core/dependencies_injection.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (context) => ThemeProvider())],
+      providers: DependenciesInjection.providers,
       child: const MyApp(),
     ),
   );
@@ -35,7 +36,7 @@ class MyApp extends StatelessWidget {
           darkTheme: AppThemes.darkTheme,
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: const WelcomeScreen(),
+          home: AuthWrapper(),
         );
       },
     );

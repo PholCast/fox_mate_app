@@ -14,7 +14,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  UserProfile currentUser = getCurrentUser();
+  UserModel currentUser = getCurrentUser();
   List<Post> userPosts = [];
 
   @override
@@ -114,7 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 60,
-                  backgroundImage: NetworkImage(currentUser.imageUrl),
+                  backgroundImage:  (currentUser.imageUrl != null && currentUser.imageUrl!.isNotEmpty) ? NetworkImage(currentUser.imageUrl!) : const AssetImage('assets/images/blue-circle.jpg'),
                 ),
                 Positioned(
                   bottom: 0,
@@ -177,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         builder: (_) => EditProfileScreen(user: currentUser),
                       ),
                     );
-                    if (result != null && result is UserProfile) {
+                    if (result != null && result is UserModel) {
                       setState(() {
                         currentUser = result;
                       });
@@ -349,7 +349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: NetworkImage(currentUser.imageUrl),
+                backgroundImage: (currentUser.imageUrl != null && currentUser.imageUrl!.isNotEmpty) ? NetworkImage(currentUser.imageUrl!) : const AssetImage('assets/images/blue-circle.jpg'),
               ),
               SizedBox(width: 12),
               Expanded(

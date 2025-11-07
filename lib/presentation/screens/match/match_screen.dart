@@ -13,8 +13,8 @@ class MatchScreen extends StatefulWidget {
 }
 
 class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin {
-  List<UserProfile> allUsers = getDummyUsers();
-  List<UserProfile> filteredUsers = [];
+  List<UserModel> allUsers = getDummyUsers();
+  List<UserModel> filteredUsers = [];
   int currentIndex = 0;
   
   String? selectedCareer;
@@ -47,7 +47,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
   }
 
   Set<String> getAllSemesters() {
-    return allUsers.map((user) => user.semester).toSet();
+    return allUsers.map((user) => user.semester.toString()).toSet();
   }
 
   Set<String> getAllInterests() {
@@ -603,7 +603,7 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildProfileCard(UserProfile user) {
+  Widget _buildProfileCard(UserModel user) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -620,8 +620,9 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              user.imageUrl,
+            user.imageUrl != null && user.imageUrl!.isNotEmpty
+            ? Image.network(
+              user.imageUrl!,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -631,7 +632,13 @@ class _MatchScreenState extends State<MatchScreen> with TickerProviderStateMixin
                   ),
                 );
               },
-            ),
+            )
+            : Container(
+                  color: Colors.grey[300],
+                  child: Center(
+                    child: Icon(Icons.person, size: 100, color: Colors.grey[500]),
+                  ),
+                ),
             Positioned(
               bottom: 0,
               left: 0,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
-import 'package:fox_mate_app/constants/spacing.dart';
 
 class CustomTextField extends StatefulWidget {
   CustomTextField({
@@ -80,6 +79,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(22),
               borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(22),
+              borderSide: BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(22),
+              borderSide: BorderSide(color: Colors.red, width: 2),
             ),
             suffixIcon:
                 widget.isPassword
