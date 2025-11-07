@@ -9,6 +9,7 @@ class UserEntity extends Equatable {
   final String career;
   final int semester;
   final String? imageUrl;
+  final String? bio;
   final List<String> interests;
 
 
@@ -19,10 +20,11 @@ class UserEntity extends Equatable {
     required this.career,
     required this.semester,
     this.imageUrl,
+    this.bio,
     required this.interests,
   });
 
-  UserEntity copyWith({String? id, String? name, String? email, int? age, String? career, int? semester, String? imageUrl, List<String>? interests}) {
+  UserEntity copyWith({String? id, String? name, String? email, int? age, String? career, int? semester, String? imageUrl,String? bio, List<String>? interests}) {
     return UserEntity(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -31,10 +33,11 @@ class UserEntity extends Equatable {
       career: career ?? this.career,
       semester: semester ?? this.semester,
       interests: interests ?? this.interests,
-      imageUrl: imageUrl ?? this.imageUrl
+      imageUrl: imageUrl ?? this.imageUrl,
+      bio: bio ?? this.bio
     );
   }
 
   @override
-  List<Object?> get props => [id, name, email, age, career, semester, imageUrl, interests];
+  List<Object?> get props => [id, name, email, age, career, semester, imageUrl, interests,bio];
 }
