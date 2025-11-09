@@ -95,6 +95,17 @@ class AuthRepositoryImpl implements AuthRepository {
     });
   }
 
+   @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _getErrorMessage(e);
+    } catch (e) {
+      throw 'Error al enviar el correo de recuperación: ${e.toString()}';
+    }
+  }
+
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':

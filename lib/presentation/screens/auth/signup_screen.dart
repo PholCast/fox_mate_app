@@ -5,7 +5,6 @@ import 'package:fox_mate_app/components/primary_button.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
 import 'package:fox_mate_app/presentation/screens/auth/login_screen.dart';
-import 'package:fox_mate_app/presentation/screens/home/post_screen.dart';
 import 'package:fox_mate_app/presentation/wrappers/auth_wrapper.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';

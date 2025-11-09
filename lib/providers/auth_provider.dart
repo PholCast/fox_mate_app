@@ -5,6 +5,7 @@ import 'package:fox_mate_app/domain/repositories/user_repository.dart';
 import 'package:fox_mate_app/domain/usecases/sign_in_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/sign_out_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/sign_up_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/forgot_password_usecase.dart';
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
@@ -12,6 +13,7 @@ class AuthProvider extends ChangeNotifier {
   SignInUsecase _signInUsecase;
   SignUpUsecase _signUpUsecase;
   SignOutUsecase _signOutUsecase;
+  ForgotPasswordUseCase _forgotPasswordUseCase;
   AuthRepository _authRepository;
   UserRepository _userRepository;
 
@@ -19,14 +21,22 @@ class AuthProvider extends ChangeNotifier {
   UserEntity? _currentUser;
   String? _errorMessage;
 
+  bool _isSendingPasswordReset = false;
+  bool _passwordResetEmailSent = false;
+  String? _passwordResetError;
+
   AuthStatus get authStatus => _authStatus;
   UserEntity? get currentUser => _currentUser;
   String? get errorMessage => _errorMessage;
+  bool get isSendingPasswordReset => _isSendingPasswordReset;
+  bool get passwordResetEmailSent => _passwordResetEmailSent;
+  String? get passwordResetError => _passwordResetError;
 
   AuthProvider(
     this._signInUsecase,
     this._signUpUsecase,
     this._signOutUsecase,
+    this._forgotPasswordUseCase,
     this._authRepository,
     this._userRepository,
   ) {
@@ -109,6 +119,35 @@ class AuthProvider extends ChangeNotifier {
     _currentUser = null;
     _errorMessage = null;
     _setState(AuthStatus.unauthenticated);
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    _isSendingPasswordReset = true;
+    _passwordResetEmailSent = false;
+    _passwordResetError = null;
+    notifyListeners();
+
+    final result = await _forgotPasswordUseCase.execute(email: email);
+
+    _isSendingPasswordReset = false;
+
+    if (result.isSuccess) {
+      _passwordResetEmailSent = true;
+      _passwordResetError = null;
+    } else {
+      _passwordResetEmailSent = false;
+      _passwordResetError = result.errorMessage;
+    }
+
+    notifyListeners();
+  }
+
+  /// Resets the forgot password state
+  void resetPasswordResetState() {
+    _isSendingPasswordReset = false;
+    _passwordResetEmailSent = false;
+    _passwordResetError = null;
+    notifyListeners();
   }
 
   void _setState(AuthStatus status) {

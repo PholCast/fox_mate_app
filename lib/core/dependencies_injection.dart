@@ -14,6 +14,7 @@ import 'package:fox_mate_app/domain/repositories/user_repository.dart';
 //import 'package:fox_mate_app/domain/usecases/get_unread_notifications_count_stream.dart';
 //import 'package:fox_mate_app/domain/usecases/mark_notifications_as_read_usecase.dart';
 //import 'package:fox_mate_app/domain/usecases/send_recipe_notification_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/forgot_password_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/sign_in_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/sign_out_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/sign_up_usecase.dart';
@@ -48,6 +49,8 @@ class DependenciesInjection {
       userRepository,
     );
     final SignOutUsecase signOutUsecase = SignOutUsecase(authRepository);
+
+    final ForgotPasswordUseCase forgotPasswordUseCase = ForgotPasswordUseCase(authRepository);
     //Esta linea se usará cuando se descomente el provider de UserProvider
     final UpdateProfileUseCase updateProfileUseCase = UpdateProfileUseCase( 
       userRepository,
@@ -75,6 +78,7 @@ class DependenciesInjection {
               signInUsecase,
               signUpUsecase,
               signOutUsecase,
+              forgotPasswordUseCase,
               authRepository,
               userRepository,
             ),

@@ -4,12 +4,10 @@ import 'package:fox_mate_app/components/custom_text_field.dart';
 import 'package:fox_mate_app/components/primary_button.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
-import 'package:fox_mate_app/main.dart';
 import 'package:fox_mate_app/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fox_mate_app/presentation/screens/auth/signup_screen.dart';
 import 'package:fox_mate_app/presentation/wrappers/auth_wrapper.dart';
-import 'package:fox_mate_app/presentation/wrappers/main_navigation_wrapper.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
