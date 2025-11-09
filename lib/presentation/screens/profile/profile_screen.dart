@@ -15,15 +15,15 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   UserModel currentUser = getCurrentUser();
-  List<Post> userPosts = [];
+  //List<Post> userPosts = [];
 
   @override
   void initState() {
     super.initState();
     // Filtrar posts del usuario actual
-    userPosts = getDummyPosts()
+    /*userPosts = getDummyPosts()
         .where((post) => post.authorName.contains('Sofia'))
-        .toList();
+        .toList();*/
   }
 
   String _getTimeAgo(DateTime timestamp) {
@@ -300,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(height: 12),
                   
                   // Lista de posts
-                  if (userPosts.isEmpty)
+                  /*if (userPosts.isEmpty)
                     Center(
                       child: Padding(
                         padding: EdgeInsets.all(32),
@@ -322,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       itemBuilder: (context, index) {
                         return _buildPostCard(userPosts[index]);
                       },
-                    ),
+                    ),*/
                 ],
               ),
             ),
@@ -334,7 +334,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildPostCard(Post post) {
+  /*Widget _buildPostCard(Post post) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -432,5 +432,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
-  }
+  }*/
 }
