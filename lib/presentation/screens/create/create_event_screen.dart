@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
+import 'package:fox_mate_app/providers/auth_provider.dart';
+import 'package:fox_mate_app/providers/event_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class CreateEventScreen extends StatefulWidget {
   const CreateEventScreen({super.key});
@@ -19,6 +22,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   String? _selectedCategory;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
 
   final List<String> _categories = [
     'Deportivos',
@@ -52,9 +56,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al seleccionar imagen: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
     }
   }
 
@@ -69,11 +75,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: CustomColors.primaryColor,
             ),
           ),
@@ -82,14 +88,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       },
     );
 
-    if (pickedDate != null) {
+    if (pickedDate != null && mounted) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),
         builder: (context, child) {
           return Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
+              colorScheme: const ColorScheme.light(
                 primary: CustomColors.primaryColor,
               ),
             ),
@@ -112,40 +118,105 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
   }
 
-  void _createEvent() {
+  Future<void> _createEvent() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor ingresa un título')),
+        const SnackBar(
+          content: Text('Por favor ingresa un título'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     if (_descriptionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor ingresa una descripción')),
+        const SnackBar(
+          content: Text('Por favor ingresa una descripción'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     if (_selectedDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor selecciona fecha y hora')),
+        const SnackBar(
+          content: Text('Por favor selecciona fecha y hora'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor selecciona una categoría')),
+        const SnackBar(
+          content: Text('Por favor selecciona una categoría'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
-    // Aquí iría la lógica para crear el evento
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('¡Evento creado exitosamente!')),
-    );
-    Navigator.pop(context);
+    final authProvider = context.read<AuthProvider>();
+    final eventProvider = context.read<EventProvider>();
+
+    if (authProvider.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Usuario no autenticado'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final user = authProvider.currentUser!;
+
+      await eventProvider.createEvent(
+        creatorId: user.id,
+        creatorName: user.name,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        eventDate: _selectedDateTime!,
+        category: _selectedCategory!,
+        location: _locationController.text.trim().isEmpty
+            ? null
+            : _locationController.text.trim(),
+        image: _selectedImage,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Evento creado exitosamente!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al crear evento: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   String _formatDateTime(DateTime dateTime) {
@@ -166,11 +237,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.close, color: Colors.black),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: Text(
+        title: const Text(
           'Crear Evento',
           style: TextStyle(
             color: Colors.black,
@@ -179,332 +250,364 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           ),
         ),
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(1),
+          preferredSize: const Size.fromHeight(1),
           child: Container(
             color: Colors.grey[300],
             height: 1,
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(Spacing.padding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Título del evento',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: 'Ej: Torneo de FIFA',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 15,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(Spacing.padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Título del evento',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
-              ),
-              SizedBox(height: 24),
-
-              Text(
-                'Descripción',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _descriptionController,
-                maxLines: 4,
-                maxLength: 300,
-                decoration: InputDecoration(
-                  hintText: 'Añade una descripción detallada de tu evento...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 15,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  contentPadding: EdgeInsets.all(16),
-                ),
-              ),
-              SizedBox(height: 24),
-
-              Text(
-                'Fecha y Hora',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              GestureDetector(
-                onTap: _selectDateTime,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _selectedDateTime != null
-                              ? _formatDateTime(_selectedDateTime!)
-                              : 'mm/dd/yyyy, --:-- --',
-                          style: TextStyle(
-                            color: _selectedDateTime != null
-                                ? Colors.black
-                                : Colors.grey[400],
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.calendar_today,
-                        color: Colors.grey[600],
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 24),
-
-              Text(
-                'Categoría',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedCategory,
-                    hint: Text(
-                      'Selecciona una categoría',
-                      style: TextStyle(
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _titleController,
+                    enabled: !_isLoading,
+                    decoration: InputDecoration(
+                      hintText: 'Ej: Torneo de FIFA',
+                      hintStyle: TextStyle(
                         color: Colors.grey[400],
                         fontSize: 15,
                       ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                     ),
-                    isExpanded: true,
-                    icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-                    items: _categories.map((String category) {
-                      return DropdownMenuItem<String>(
-                        value: category,
-                        child: Text(
-                          category,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.black,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedCategory = newValue;
-                      });
-                    },
                   ),
-                ),
-              ),
-              SizedBox(height: 24),
-
-              Text(
-                'Lugar (Opcional)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  hintText: 'Ej: Sala de juegos, Edificio 5',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 15,
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Descripción',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _descriptionController,
+                    enabled: !_isLoading,
+                    maxLines: 4,
+                    maxLength: 300,
+                    decoration: InputDecoration(
+                      hintText: 'Añade una descripción detallada...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 15,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.all(16),
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Fecha y Hora',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
-              ),
-              SizedBox(height: 24),
-
-              Text(
-                'Imagen (Opcional)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              
-              if (_selectedImage == null)
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: DashedBorder(
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: _isLoading ? null : _selectDateTime,
                     child: Container(
-                      width: double.infinity,
-                      height: 150,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Row(
                         children: [
-                          Icon(
-                            Icons.camera_alt_outlined,
-                            color: Colors.grey[600],
-                            size: 40,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Sube una imagen',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey[600],
+                          Expanded(
+                            child: Text(
+                              _selectedDateTime != null
+                                  ? _formatDateTime(_selectedDateTime!)
+                                  : 'dd/mm/yyyy, --:--',
+                              style: TextStyle(
+                                color: _selectedDateTime != null
+                                    ? Colors.black
+                                    : Colors.grey[400],
+                                fontSize: 15,
+                              ),
                             ),
+                          ),
+                          Icon(
+                            Icons.calendar_today,
+                            color: Colors.grey[600],
+                            size: 20,
                           ),
                         ],
                       ),
                     ),
                   ),
-                )
-              else
-                Stack(
-                  children: [
-                    ClipRRect(
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Categoría',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        _selectedImage!,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCategory,
+                        hint: Text(
+                          'Selecciona una categoría',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 15,
+                          ),
+                        ),
+                        isExpanded: true,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.grey[600],
+                        ),
+                        items: _categories.map((String category) {
+                          return DropdownMenuItem<String>(
+                            value: category,
+                            enabled: !_isLoading,
+                            child: Text(
+                              category,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: _isLoading
+                            ? null
+                            : (String? newValue) {
+                                setState(() {
+                                  _selectedCategory = newValue;
+                                });
+                              },
                       ),
                     ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: _removeImage,
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Lugar (Opcional)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _locationController,
+                    enabled: !_isLoading,
+                    decoration: InputDecoration(
+                      hintText: 'Ej: Sala de juegos, Edificio 5',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 15,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Imagen (Opcional)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_selectedImage == null)
+                    GestureDetector(
+                      onTap: _isLoading ? null : _pickImage,
+                      child: DashedBorder(
                         child: Container(
-                          padding: EdgeInsets.all(8),
+                          width: double.infinity,
+                          height: 150,
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.close,
                             color: Colors.white,
-                            size: 20,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.camera_alt_outlined,
+                                color: Colors.grey[600],
+                                size: 40,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Sube una imagen',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    )
+                  else
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _selectedImage!,
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        if (!_isLoading)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: _removeImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
-              SizedBox(height: 40),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _createEvent,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: CustomColors.primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _createEvent,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CustomColors.primaryColor,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey[300],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Crear evento',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                     ),
-                    elevation: 0,
                   ),
-                  child: Text(
-                    'Crear evento',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              SizedBox(height: 20),
-            ],
+            ),
           ),
-        ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.1),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-// Widget para crear guiones
 class DashedBorder extends StatelessWidget {
   final Widget child;
   final Color color;
@@ -554,7 +657,7 @@ class DashedBorderPainter extends CustomPainter {
       ..addRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(0, 0, size.width, size.height),
-          Radius.circular(12),
+          const Radius.circular(12),
         ),
       );
 
@@ -562,7 +665,7 @@ class DashedBorderPainter extends CustomPainter {
   }
 
   void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
-    final dashWidth = 8.0;
+    const dashWidth = 8.0;
     final dashSpace = gap;
     var distance = 0.0;
 
@@ -570,11 +673,11 @@ class DashedBorderPainter extends CustomPainter {
       while (distance < metric.length) {
         final start = metric.getTangentForOffset(distance);
         final end = metric.getTangentForOffset(distance + dashWidth);
-        
+
         if (start != null && end != null) {
           canvas.drawLine(start.position, end.position, paint);
         }
-        
+
         distance += dashWidth + dashSpace;
       }
       distance = 0.0;

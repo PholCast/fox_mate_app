@@ -1,0 +1,19 @@
+// lib/domain/repositories/event_repository.dart
+import 'dart:io';
+import 'package:fox_mate_app/domain/entities/event_entity.dart';
+
+abstract class EventRepository {
+  Stream<List<EventEntity>> getEvents();
+  Future<void> createEvent({
+    required String creatorId,
+    required String creatorName,
+    required String title,
+    required String description,
+    required DateTime eventDate,
+    required String category,
+    String? location,
+    File? image,
+  });
+  Future<void> toggleAttendance(String eventId, String userId);
+  Future<void> deleteEvent(String eventId);
+}

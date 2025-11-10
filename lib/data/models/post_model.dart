@@ -1,35 +1,77 @@
-class Post {
-  final String id;
-  final String authorName;
-  final String authorInitials;
-  final String content;
-  final String? imageUrl;
-  final List<String> tags;
-  final DateTime timestamp;
+// lib/data/models/post_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fox_mate_app/domain/entities/post_entity.dart';
 
-  Post({
-    required this.id,
-    required this.authorName,
-    required this.authorInitials,
-    required this.content,
-    this.imageUrl,
-    required this.tags,
-    required this.timestamp,
+class PostModel extends PostEntity {
+  const PostModel({
+    required super.id,
+    required super.authorId,
+    required super.authorName,
+    required super.authorInitials,
+    super.authorProfileImage,
+    required super.content,
+    super.imageUrl,
+    required super.tags,
+    required super.timestamp,
   });
+
+  factory PostModel.fromJson(Map<String, dynamic> json, String id) {
+    return PostModel(
+      id: id,
+      authorId: json['authorId'] ?? '',
+      authorName: json['authorName'] ?? '',
+      authorInitials: json['authorInitials'] ?? '',
+      authorProfileImage: json['authorProfileImage'],
+      content: json['content'] ?? '',
+      imageUrl: json['imageUrl'],
+      tags: List<String>.from(json['tags'] ?? []),
+      timestamp: (json['timestamp'] as Timestamp).toDate(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'authorId': authorId,
+      'authorName': authorName,
+      'authorInitials': authorInitials,
+      'authorProfileImage': authorProfileImage,
+      'content': content,
+      'imageUrl': imageUrl,
+      'tags': tags,
+      'timestamp': Timestamp.fromDate(timestamp),
+    };
+  }
+
+  factory PostModel.fromEntity(PostEntity post) {
+    return PostModel(
+      id: post.id,
+      authorId: post.authorId,
+      authorName: post.authorName,
+      authorInitials: post.authorInitials,
+      authorProfileImage: post.authorProfileImage,
+      content: post.content,
+      imageUrl: post.imageUrl,
+      tags: post.tags,
+      timestamp: post.timestamp,
+    );
+  }
 }
 
-List<Post> getDummyPosts() {
+// Mantén esta función para testing, pero ya no será necesaria en producción
+List<PostModel> getDummyPosts() {
   return [
-    Post(
+    PostModel(
       id: '1',
+      authorId: 'dummy1',
       authorName: 'Ana Pérez',
       authorInitials: 'AP',
       content: 'Alguien tiene apuntes de la clase de Microeconomía? Los necesito urgente!',
-      tags: ['Apuntes', 'Microeconomia', 'Polll', 'Angelllll', 'Tareaaaa', 'Ayudadaaaaa', 'Porfaaaaa', 'Potoo', 'Quiero'],
+      tags: ['Apuntes', 'Microeconomia', 'Académico'],
       timestamp: DateTime.now().subtract(Duration(hours: 2)),
     ),
-    Post(
+    PostModel(
       id: '2',
+      authorId: 'dummy2',
       authorName: 'Carlos Gómez',
       authorInitials: 'CG',
       content: '¡Fiesta de bienvenida en la residencia X este viernes!',
@@ -37,31 +79,15 @@ List<Post> getDummyPosts() {
       tags: ['Fiesta', 'Social'],
       timestamp: DateTime.now().subtract(Duration(hours: 5)),
     ),
-    Post(
+    PostModel(
       id: '3',
+      authorId: 'dummy3',
       authorName: 'María López',
       authorInitials: 'ML',
       content: 'Vendo libros de Cálculo I y II, en excelente estado. Precio negociable.',
       imageUrl: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800',
-      tags: ['Venta', 'Libros', 'Calculo'],
+      tags: ['Venta', 'Libros', 'Académico'],
       timestamp: DateTime.now().subtract(Duration(hours: 8)),
-    ),
-    Post(
-      id: '4',
-      authorName: 'Juan Ramírez',
-      authorInitials: 'JR',
-      content: 'Alguien más se une al torneo de fútbol del sábado? Necesitamos 2 personas más para completar el equipo',
-      tags: ['Deportes', 'Futbol', 'Social'],
-      timestamp: DateTime.now().subtract(Duration(hours: 12)),
-    ),
-    Post(
-      id: '5',
-      authorName: 'Sofia Rodriguez',
-      authorInitials: 'SM',
-      content: 'Grupo de estudio de Programación este fin de semana. Quien se apunta?',
-      imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
-      tags: ['Estudio', 'Programacion', 'Académico'],
-      timestamp: DateTime.now().subtract(Duration(days: 1)),
     ),
   ];
 }

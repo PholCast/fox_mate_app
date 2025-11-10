@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
+import 'package:fox_mate_app/providers/auth_provider.dart';
+import 'package:fox_mate_app/providers/post_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -17,6 +20,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   File? _selectedImage;
   String _selectedCategory = 'Académico';
   final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -40,9 +44,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al seleccionar imagen: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
     }
   }
 
@@ -52,19 +58,94 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
   }
 
-  void _publishPost() {
+  List<String> _parseTags() {
+    final category = _selectedCategory;
+    final customTags = _tagsController.text
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+    
+    return [category, ...customTags];
+  }
+
+  String _getInitials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    } else if (parts.isNotEmpty) {
+      return parts[0][0].toUpperCase();
+    }
+    return 'U';
+  }
+
+  Future<void> _publishPost() async {
     if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor escribe algo antes de publicar')),
+        const SnackBar(
+          content: Text('Por favor escribe algo antes de publicar'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
-    // Aquí iría la lógica para publicar el post
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('¡Publicación creada exitosamente!')),
-    );
-    Navigator.pop(context);
+    final authProvider = context.read<AuthProvider>();
+    final postProvider = context.read<PostProvider>();
+    
+    if (authProvider.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Usuario no autenticado'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final user = authProvider.currentUser!;
+      final tags = _parseTags();
+
+      await postProvider.createPost(
+        authorId: user.id,
+        authorName: user.name,
+        authorInitials: _getInitials(user.name),
+        authorProfileImage: user.imageUrl,
+        content: _contentController.text.trim(),
+        tags: tags,
+        image: _selectedImage,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Publicación creada exitosamente!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al crear publicación: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -76,11 +157,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.black),
-          onPressed: () => Navigator.pop(context),  
+          icon: const Icon(Icons.close, color: Colors.black),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: Text(
+        title: const Text(
           'Crear Publicación',
           style: TextStyle(
             color: Colors.black,
@@ -89,235 +170,266 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
         ),
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(1),
+          preferredSize: const Size.fromHeight(1),
           child: Container(
             color: Colors.grey[300],
             height: 1,
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(Spacing.padding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Contenido',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _contentController,
-                maxLines: 4,
-                maxLength: 500,
-                decoration: InputDecoration(
-                  hintText: 'Comparte algo con la comunidad...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 15,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(Spacing.padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Contenido',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  contentPadding: EdgeInsets.all(16),
-                ),
-              ),
-              SizedBox(height: 24),
-
-              if (_selectedImage == null)
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: DashedBorder(
-                    child: Container(
-                      width: double.infinity,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _contentController,
+                    enabled: !_isLoading,
+                    maxLines: 4,
+                    maxLength: 500,
+                    decoration: InputDecoration(
+                      hintText: 'Comparte algo con la comunidad...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 15,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.camera_alt_outlined,
-                            color: Colors.grey[600],
-                            size: 50,
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'Añadir una imagen (opcional)',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Toca para subir una imagen',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.all(16),
                     ),
                   ),
-                )
-              else
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        _selectedImage!,
-                        width: double.infinity,
-                        height: 250,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: _removeImage,
+                  const SizedBox(height: 24),
+
+                  if (_selectedImage == null)
+                    GestureDetector(
+                      onTap: _isLoading ? null : _pickImage,
+                      child: DashedBorder(
                         child: Container(
-                          padding: EdgeInsets.all(8),
+                          width: double.infinity,
+                          height: 180,
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.close,
                             color: Colors.white,
-                            size: 20,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.camera_alt_outlined,
+                                color: Colors.grey[600],
+                                size: 50,
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Añadir una imagen (opcional)',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Toca para subir una imagen',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    )
+                  else
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _selectedImage!,
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        if (!_isLoading)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: _removeImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
-              SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              Text(
-                'Etiquetas (ayuda a otros a encontrar tu post)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _tagsController,
-                decoration: InputDecoration(
-                  hintText: 'Añade etiquetas separadas por comas',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 15,
+                  const Text(
+                    'Etiquetas (ayuda a otros a encontrar tu post)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(25),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _tagsController,
+                    enabled: !_isLoading,
+                    decoration: InputDecoration(
+                      hintText: 'Añade etiquetas separadas por comas',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 15,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(25),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(25),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
-              ),
-              SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              Text(
-                '¿De qué trata tu publicación?',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildCategoryButton(
-                      label: 'Académico',
-                      icon: Icons.school_outlined,
-                      isSelected: _selectedCategory == 'Académico',
-                      onTap: () {
-                        setState(() {
-                          _selectedCategory = 'Académico';
-                        });
-                      },
+                  const Text(
+                    '¿De qué trata tu publicación?',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: _buildCategoryButton(
-                      label: 'Social',
-                      icon: Icons.celebration_outlined,
-                      isSelected: _selectedCategory == 'Social',
-                      onTap: () {
-                        setState(() {
-                          _selectedCategory = 'Social';
-                        });
-                      },
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildCategoryButton(
+                          label: 'Académico',
+                          icon: Icons.school_outlined,
+                          isSelected: _selectedCategory == 'Académico',
+                          onTap: _isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _selectedCategory = 'Académico';
+                                  });
+                                },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildCategoryButton(
+                          label: 'Social',
+                          icon: Icons.celebration_outlined,
+                          isSelected: _selectedCategory == 'Social',
+                          onTap: _isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _selectedCategory = 'Social';
+                                  });
+                                },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _publishPost,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CustomColors.primaryColor,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey[300],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Publicar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
-              SizedBox(height: 30),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _publishPost,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: CustomColors.primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Publicar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-            ],
+            ),
           ),
-        ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.1),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -326,12 +438,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     required String label,
     required IconData icon,
     required bool isSelected,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: isSelected ? CustomColors.secondaryColor : Colors.grey[100],
           borderRadius: BorderRadius.circular(30),
@@ -348,7 +460,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               color: isSelected ? Colors.white : Colors.black87,
               size: 22,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
@@ -414,7 +526,7 @@ class DashedBorderPainter extends CustomPainter {
       ..addRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(0, 0, size.width, size.height),
-          Radius.circular(12),
+          const Radius.circular(12),
         ),
       );
 
@@ -422,7 +534,7 @@ class DashedBorderPainter extends CustomPainter {
   }
 
   void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
-    final dashWidth = 8.0;
+    const dashWidth = 8.0;
     final dashSpace = gap;
     var distance = 0.0;
 
@@ -430,11 +542,11 @@ class DashedBorderPainter extends CustomPainter {
       while (distance < metric.length) {
         final start = metric.getTangentForOffset(distance);
         final end = metric.getTangentForOffset(distance + dashWidth);
-        
+
         if (start != null && end != null) {
           canvas.drawLine(start.position, end.position, paint);
         }
-        
+
         distance += dashWidth + dashSpace;
       }
       distance = 0.0;
