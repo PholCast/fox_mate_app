@@ -37,6 +37,12 @@ class _EventsScreenState extends State<EventsScreen> {
   List<EventEntity> getFilteredEvents(List<EventEntity> events) {
     List<EventEntity> filtered = events;
 
+    // Filtrar eventos que no hayan pasado
+    final now = DateTime.now();
+    filtered = filtered.where((event) {
+      return event.eventDate.isAfter(now);
+    }).toList();
+
     if (searchQuery.isNotEmpty) {
       filtered = filtered.where((event) {
         final titleLower = event.title.toLowerCase();
@@ -652,15 +658,39 @@ class _EventsScreenState extends State<EventsScreen> {
                       color: Colors.grey[600],
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      _formatEventDate(event.eventDate),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[700],
+                    Expanded(
+                      child: Text(
+                        _formatEventDate(event.eventDate),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
                       ),
                     ),
                   ],
                 ),
+                if (event.location != null && event.location!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 18,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          event.location!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   children: [

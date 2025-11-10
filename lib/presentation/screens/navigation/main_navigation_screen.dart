@@ -12,13 +12,13 @@ class MainNavigationScreen extends StatelessWidget {
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
         return Scaffold(
-          extendBody: true,
+          // ❌ QUITA extendBody para que el contenido no vaya detrás de la barra
+          extendBody: false,
           body: IndexedStack(
             index: navigationProvider.currentIndex,
-            children:
-                navigationProvider.navigationItems
-                    .map((item) => item.screen)
-                    .toList(),
+            children: navigationProvider.navigationItems
+                .map((item) => item.screen)
+                .toList(),
           ),
           bottomNavigationBar: CustomBottomNavigationBar(),
         );
