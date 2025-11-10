@@ -337,9 +337,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             TextField(
               keyboardType: TextInputType.emailAddress,
               controller: emailController,
+              readOnly: true,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Colors.grey[100],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
