@@ -109,6 +109,61 @@ class PostRepositoryImpl implements PostRepository {
     }
   }
 
+  @override
+  Future<void> updatePost({
+    required String postId,
+    required String content,
+    required List<String> tags,
+    File? image,
+    bool removeImage = false,
+  }) async {
+    try {
+      // Obtener el post actual
+      final doc = await _firestore.collection('posts').doc(postId).get();
+      
+      if (!doc.exists) {
+        throw Exception('Post not found');
+      }
+
+      final currentData = doc.data()!;
+      String? imageUrl = currentData['imageUrl'] as String?;
+
+      // Si se debe eliminar la imagen
+      if (removeImage && imageUrl != null) {
+        try {
+          final ref = FirebaseStorage.instance.refFromURL(imageUrl);
+          await ref.delete();
+        } catch (e) {
+          print('Error deleting old image: $e');
+        }
+        imageUrl = null;
+      }
+
+      // Si hay una nueva imagen, subirla
+      if (image != null) {
+        // Eliminar imagen anterior si existe
+        if (imageUrl != null) {
+          try {
+            final oldRef = FirebaseStorage.instance.refFromURL(imageUrl);
+            await oldRef.delete();
+          } catch (e) {
+            print('Error deleting old image: $e');
+          }
+        }
+        imageUrl = await _uploadImage(image, currentData['authorId'] as String);
+      }
+
+      // Actualizar el post en Firestore
+      await _firestore.collection('posts').doc(postId).update({
+        'content': content,
+        'tags': tags,
+        'imageUrl': imageUrl,
+      });
+    } catch (e) {
+      throw Exception('Error updating post: ${e.toString()}');
+    }
+  }
+
   Future<String> _uploadImage(File image, String userId) async {
     try {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${userId}.jpg';

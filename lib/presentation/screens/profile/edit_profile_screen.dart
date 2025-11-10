@@ -123,13 +123,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final userProvider = context.read<UserProvider>();
 
-      // TODO: Upload image to Firebase Storage if _selectedImage is not null
-      // String? imageUrl;
-      // if (_selectedImage != null) {
-      //   imageUrl = await uploadImageToStorage(_selectedImage!);
-      // }
-
-      // Update profile in provider
+      // Update profile in provider (now with image support)
       await userProvider.updateProfile(
         userId: widget.user.id,
         name: nameController.text.trim(),
@@ -138,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         semester: semester,
         bio: bioController.text.trim(),
         interests: interests,
-        // imageUrl: imageUrl ?? widget.user.imageUrl,
+        profileImage: _selectedImage,
       );
 
       if (mounted) {
@@ -329,7 +323,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             const SizedBox(height: 20),
 
-                        const Text(
+            const Text(
               'Correo',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),

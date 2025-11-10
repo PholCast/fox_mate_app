@@ -19,4 +19,12 @@ abstract class PostRepository {
   });
   
   Future<void> deletePost(String postId);
+  
+  Future<void> updatePost({
+    required String postId,
+    required String content,
+    required List<String> tags,
+    File? image,
+    bool removeImage = false,
+  });
 }

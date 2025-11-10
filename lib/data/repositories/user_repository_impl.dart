@@ -1,13 +1,19 @@
+// lib/data/repositories/user_repository_impl.dart
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fox_mate_app/data/models/user_model.dart';
 import 'package:fox_mate_app/domain/entities/user_entity.dart';
 import 'package:fox_mate_app/domain/repositories/user_repository.dart';
 
 class UserRepositoryImpl extends UserRepository {
   final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage;
+  final FirebaseAuth _firebaseAuth;
   static const String _collectionName = 'users';
 
-  UserRepositoryImpl(this._firestore);
+  UserRepositoryImpl(this._firestore, this._storage, this._firebaseAuth);
 
   @override
   Future<void> saveUserProfile(UserEntity user) async {
@@ -71,6 +77,43 @@ class UserRepositoryImpl extends UserRepository {
     } catch (e) {
       print('Failed to get all users: ${e.toString()}');
       throw Exception('Failed to get all users: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<String> uploadProfileImage(File image, String userId) async {
+    try {
+      // Eliminar imagen anterior si existe
+      try {
+        final oldImageRef = _storage.ref().child('profiles').child('$userId.jpg');
+        await oldImageRef.delete();
+      } catch (e) {
+        // Si no existe imagen anterior, continuar
+        print('No previous image to delete or error: $e');
+      }
+
+      // Subir nueva imagen
+      final fileName = '$userId.jpg';
+      final ref = _storage.ref().child('profiles').child(userId).child(fileName);
+
+      
+      final uploadTask = await ref.putFile(image);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      
+      // Actualizar photoUrl en Firebase Auth
+      final currentUser = _firebaseAuth.currentUser;
+      if (currentUser != null && currentUser.uid == userId) {
+        await currentUser.updatePhotoURL(downloadUrl);
+        // Recargar el usuario para obtener el photoURL actualizado
+        await currentUser.reload();
+        final reloadedUser = _firebaseAuth.currentUser;
+        print('PhotoURL updated successfully');
+        print("photourl es:${reloadedUser?.photoURL}");
+      }
+      
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Error uploading profile image: ${e.toString()}');
     }
   }
 }

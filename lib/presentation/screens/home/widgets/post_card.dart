@@ -4,8 +4,15 @@ import 'package:fox_mate_app/domain/entities/post_entity.dart';
 
 class PostCard extends StatelessWidget {
   final PostEntity post;
+  final bool showMenu;
+  final VoidCallback? onMenuPressed;
 
-  const PostCard({super.key, required this.post});
+  const PostCard({
+    super.key,
+    required this.post,
+    this.showMenu = false,
+    this.onMenuPressed,
+  });
 
   String _getTimeAgo(DateTime timestamp) {
     final now = DateTime.now();
@@ -89,6 +96,14 @@ class PostCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (showMenu && onMenuPressed != null)
+                IconButton(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  color: Colors.grey[600],
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: onMenuPressed,
+                ),
             ],
           ),
           const SizedBox(height: 12),

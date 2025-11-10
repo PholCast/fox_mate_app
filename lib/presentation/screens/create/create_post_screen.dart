@@ -2,13 +2,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
+import 'package:fox_mate_app/domain/entities/post_entity.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart';
 import 'package:fox_mate_app/providers/post_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final PostEntity? postToEdit;
+
+  const CreatePostScreen({super.key, this.postToEdit});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -18,9 +21,37 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
   File? _selectedImage;
+  String? _existingImageUrl;
   String _selectedCategory = 'Académico';
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+  bool _removeImage = false;
+
+  bool get isEditMode => widget.postToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isEditMode) {
+      final post = widget.postToEdit!;
+      _contentController.text = post.content;
+      _existingImageUrl = post.imageUrl;
+      
+      // Parse tags - first tag is usually the category
+      if (post.tags.isNotEmpty) {
+        final firstTag = post.tags[0];
+        if (firstTag == 'Académico' || firstTag == 'Social') {
+          _selectedCategory = firstTag;
+          // Get custom tags (excluding the category)
+          final customTags = post.tags.skip(1).join(', ');
+          _tagsController.text = customTags;
+        } else {
+          // If no category tag, use all tags
+          _tagsController.text = post.tags.join(', ');
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -50,12 +81,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         );
       }
     }
-  }
-
-  void _removeImage() {
-    setState(() {
-      _selectedImage = null;
-    });
   }
 
   List<String> _parseTags() {
@@ -90,51 +115,77 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
-    final authProvider = context.read<AuthProvider>();
     final postProvider = context.read<PostProvider>();
     
-    if (authProvider.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Usuario no autenticado'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final user = authProvider.currentUser!;
       final tags = _parseTags();
 
-      await postProvider.createPost(
-        authorId: user.id,
-        authorName: user.name,
-        authorInitials: _getInitials(user.name),
-        authorProfileImage: user.imageUrl,
-        content: _contentController.text.trim(),
-        tags: tags,
-        image: _selectedImage,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Publicación creada exitosamente!'),
-            backgroundColor: Colors.green,
-          ),
+      if (isEditMode) {
+        // Update existing post
+        await postProvider.updatePost(
+          postId: widget.postToEdit!.id,
+          content: _contentController.text.trim(),
+          tags: tags,
+          image: _selectedImage,
+          removeImage: _removeImage && _existingImageUrl != null,
         );
-        Navigator.pop(context);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Publicación actualizada exitosamente!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        // Create new post
+        final authProvider = context.read<AuthProvider>();
+        
+        if (authProvider.currentUser == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Usuario no autenticado'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        final user = authProvider.currentUser!;
+
+        await postProvider.createPost(
+          authorId: user.id,
+          authorName: user.name,
+          authorInitials: _getInitials(user.name),
+          authorProfileImage: user.imageUrl,
+          content: _contentController.text.trim(),
+          tags: tags,
+          image: _selectedImage,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Publicación creada exitosamente!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al crear publicación: $e'),
+            content: Text(isEditMode 
+                ? 'Error al actualizar publicación: $e'
+                : 'Error al crear publicación: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -161,9 +212,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Crear Publicación',
-          style: TextStyle(
+        title: Text(
+          isEditMode ? 'Editar Publicación' : 'Crear Publicación',
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -224,7 +275,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  if (_selectedImage == null)
+                  if (_selectedImage == null && _existingImageUrl == null)
                     GestureDetector(
                       onTap: _isLoading ? null : _pickImage,
                       child: DashedBorder(
@@ -265,7 +316,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         ),
                       ),
                     )
-                  else
+                  else if (_selectedImage != null)
                     Stack(
                       children: [
                         ClipRRect(
@@ -282,7 +333,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             top: 8,
                             right: 8,
                             child: GestureDetector(
-                              onTap: _removeImage,
+                              onTap: () {
+                                setState(() {
+                                  _selectedImage = null;
+                                });
+                              },
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
@@ -295,6 +350,75 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                   size: 20,
                                 ),
                               ),
+                            ),
+                          ),
+                      ],
+                    )
+                  else if (_existingImageUrl != null && !_removeImage)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            _existingImageUrl!,
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 250,
+                                color: Colors.grey[200],
+                                child: const Center(
+                                  child: Icon(Icons.broken_image, size: 48),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        if (!_isLoading)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: _pickImage,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.edit,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _removeImage = true;
+                                      _existingImageUrl = null;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -408,9 +532,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Publicar',
-                              style: TextStyle(
+                          : Text(
+                              isEditMode ? 'Actualizar' : 'Publicar',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                               ),

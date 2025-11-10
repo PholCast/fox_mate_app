@@ -1,3 +1,5 @@
+// lib/providers/user_provider.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/domain/entities/user_entity.dart';
 import 'package:fox_mate_app/domain/repositories/user_repository.dart';
@@ -55,7 +57,7 @@ class UserProvider extends ChangeNotifier {
     _setState(UserState.success);
   }
 
-  /// Update user profile with new information
+  /// Update user profile with new information (including optional image)
   Future<void> updateProfile({
     required String userId,
     String? name,
@@ -66,12 +68,23 @@ class UserProvider extends ChangeNotifier {
     String? imageUrl,
     String? bio,
     List<String>? interests,
+    File? profileImage,
   }) async {
     if (_user == null) return;
 
     _setState(UserState.loading);
     
     try {
+      String? newImageUrl = imageUrl;
+
+      // Upload profile image if provided
+      if (profileImage != null) {
+        newImageUrl = await _userRepository.uploadProfileImage(
+          profileImage,
+          userId,
+        );
+      }
+
       // Create updated user entity
       final updatedUser = _user!.copyWith(
         name: name ?? _user!.name,
@@ -79,7 +92,7 @@ class UserProvider extends ChangeNotifier {
         age: age ?? _user!.age,
         career: career ?? _user!.career,
         semester: semester ?? _user!.semester,
-        imageUrl: imageUrl ?? _user!.imageUrl,
+        imageUrl: newImageUrl ?? _user!.imageUrl,
         bio: bio ?? _user!.bio,
         interests: interests ?? _user!.interests,
       );
@@ -94,6 +107,7 @@ class UserProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Error al actualizar el perfil: ${e.toString()}';
       _setState(UserState.error);
+      rethrow;
     }
   }
 

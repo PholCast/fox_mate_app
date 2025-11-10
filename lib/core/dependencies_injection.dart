@@ -9,9 +9,11 @@ import 'package:fox_mate_app/domain/repositories/navigation_repository.dart';
 import 'package:fox_mate_app/domain/repositories/post_repository.dart';
 import 'package:fox_mate_app/domain/usecases/create_event_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/create_post_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/delete_post_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/get_events_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/get_posts_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/toggle_attendance_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/update_post_usecase.dart';
 import 'package:fox_mate_app/providers/event_provider.dart';
 import 'package:fox_mate_app/providers/post_provider.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +50,7 @@ class DependenciesInjection {
 
     // Repositories
     final AuthRepository authRepository = AuthRepositoryImpl(firebaseAuth);
-    final UserRepository userRepository = UserRepositoryImpl(firebaseFirestore);
+    final UserRepository userRepository = UserRepositoryImpl(firebaseFirestore, firebaseStorage, firebaseAuth);
     final NavigationRepository navigationRepository =
         NavigationRepositoryImpl();
     final PostRepository postRepository = PostRepositoryImpl(
@@ -79,6 +81,8 @@ class DependenciesInjection {
     final GetPostsUsecase getPostsUsecase = GetPostsUsecase(postRepository);
     final GetUserPostsUsecase getUserPostsUsecase = GetUserPostsUsecase(postRepository);
     final CreatePostUsecase createPostUsecase = CreatePostUsecase(postRepository);
+    final DeletePostUsecase deletePostUsecase = DeletePostUsecase(postRepository);
+    final UpdatePostUsecase updatePostUsecase = UpdatePostUsecase(postRepository);
 
     // Events UseCases
     final GetEventsUsecase getEventsUsecase = GetEventsUsecase(eventRepository);
@@ -122,6 +126,8 @@ class DependenciesInjection {
           getPostsUsecase,
           getUserPostsUsecase,
           createPostUsecase,
+          deletePostUsecase,
+          updatePostUsecase,
         ),
       ),
 

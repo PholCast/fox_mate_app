@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
+import 'package:fox_mate_app/domain/entities/post_entity.dart';
+import 'package:fox_mate_app/presentation/screens/create/create_post_screen.dart';
 import 'package:fox_mate_app/presentation/screens/profile/edit_profile_screen.dart';
 import 'package:fox_mate_app/presentation/screens/auth/welcome_screen.dart';
 import 'package:fox_mate_app/presentation/screens/home/widgets/post_card.dart';
@@ -98,18 +100,127 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  String _getTimeAgo(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
+  void _showPostMenu(BuildContext context, PostEntity post, PostProvider postProvider) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit, color: Colors.blue),
+                title: const Text('Editar'),
+                onTap: () {
+                  Navigator.pop(context);
+                  final userProvider = context.read<UserProvider>();
+                  final authProvider = context.read<AuthProvider>();
+                  final postProvider = context.read<PostProvider>();
+                  
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CreatePostScreen(postToEdit: post),
+                    ),
+                  ).then((_) {
+                    // Refresh user posts after editing
+                    if (mounted) {
+                      final user = userProvider.user ?? authProvider.currentUser;
+                      if (user != null) {
+                        postProvider.loadUserPosts(user.id);
+                      }
+                    }
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Eliminar'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmDeletePost(context, post, postProvider);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cancel),
+                title: const Text('Cancelar'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m';
-    } else {
-      return 'Ahora';
+  Future<void> _confirmDeletePost(
+    BuildContext context,
+    PostEntity post,
+    PostProvider postProvider,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          '¿Eliminar publicación?',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        content: const Text(
+          'Esta acción no se puede deshacer.',
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Eliminar',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await postProvider.deletePost(post.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Publicación eliminada correctamente'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al eliminar: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -492,7 +603,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               final post = postProvider.userPosts[index];
                               return Column(
                                 children: [
-                                  PostCard(post: post),
+                                  PostCard(
+                                    post: post,
+                                    showMenu: true,
+                                    onMenuPressed: () => _showPostMenu(context, post, postProvider),
+                                  ),
                                   if (index < postProvider.userPosts.length - 1)
                                     const SizedBox(height: 12),
                                 ],
@@ -509,118 +624,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildPostCard(post) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Post header
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: CustomColors.primaryColor,
-                backgroundImage: post.authorProfileImage != null
-                    ? NetworkImage(post.authorProfileImage!)
-                    : null,
-                child: post.authorProfileImage == null
-                    ? Text(
-                        post.authorInitials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      post.authorName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      _getTimeAgo(post.timestamp),
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Post content
-          Text(post.content, style: const TextStyle(fontSize: 14, height: 1.5)),
-
-          // Post image
-          if (post.imageUrl != null) ...[
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                post.imageUrl!,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 200,
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: Icon(Icons.broken_image, size: 48),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-
-          // Tags
-          if (post.tags.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: post.tags.map<Widget>((tag) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: CustomColors.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    tag,
-                    style: TextStyle(
-                      color: CustomColors.primaryColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ],
       ),
     );
   }
