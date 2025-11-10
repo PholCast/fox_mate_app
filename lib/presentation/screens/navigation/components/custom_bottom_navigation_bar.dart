@@ -11,57 +11,66 @@ class CustomBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
-        return BottomAppBar(
-          color: Colors.white,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              NavigationIcon(
-                label: 'Inicio',
-                icon:
-                    navigationProvider.currentIndex == 0
-                        ? Icon(Icons.home,color: CustomColors.primaryColor)
-                        : Icon(Icons.home_outlined,color: Colors.grey[600]),
-                isSelected: navigationProvider.currentIndex == 0,
-                onTap: () => navigationProvider.navigateToIndex(0),
-              ),
-              NavigationIcon(
-                label: 'Párchate',
-                icon:
-                    navigationProvider.currentIndex == 1
-                        ? Icon(Icons.celebration,color: CustomColors.primaryColor)
-                        : Icon(Icons.celebration_outlined,color: Colors.grey[600]),
-                isSelected: navigationProvider.currentIndex == 1,
-                onTap: () => navigationProvider.navigateToIndex(1),
-              ),
-              NavigationIcon(
-                label: 'Match',
-                icon:
-                    navigationProvider.currentIndex == 2
-                        ? Icon(Icons.favorite,color: CustomColors.primaryColor)
-                        : Icon(Icons.favorite_border,color: Colors.grey[600]),
-                isSelected: navigationProvider.currentIndex == 2,
-                onTap: () => navigationProvider.navigateToIndex(2),
-              ),
-              NavigationIcon(
-                label: 'Chats',
-                icon:
-                    navigationProvider.currentIndex == 3
-                        ? Icon(Icons.chat_bubble,color: CustomColors.primaryColor)
-                        : Icon(Icons.chat_bubble_outline,color: Colors.grey[600]),
-                isSelected: navigationProvider.currentIndex == 3,
-                onTap: () => navigationProvider.navigateToIndex(3),
-              ),
-              NavigationIcon(
-                label: 'Perfil',
-                icon:
-                    navigationProvider.currentIndex == 4
-                        ? Icon(Icons.person,color: CustomColors.primaryColor)
-                        : Icon(Icons.person_outline,color: Colors.grey[600]),
-                isSelected: navigationProvider.currentIndex == 4,
-                onTap: () => navigationProvider.navigateToIndex(4),
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
               ),
             ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  NavigationIcon(
+                    label: 'Inicio',
+                    icon: navigationProvider.currentIndex == 0
+                        ? const Icon(Icons.home, color: CustomColors.primaryColor, size: 28)
+                        : Icon(Icons.home_outlined, color: Colors.grey[600], size: 28),
+                    isSelected: navigationProvider.currentIndex == 0,
+                    onTap: () => navigationProvider.navigateToIndex(0),
+                  ),
+                  NavigationIcon(
+                    label: 'Parchate',
+                    icon: navigationProvider.currentIndex == 1
+                        ? const Icon(Icons.celebration, color: CustomColors.primaryColor, size: 28)
+                        : Icon(Icons.celebration_outlined, color: Colors.grey[600], size: 28),
+                    isSelected: navigationProvider.currentIndex == 1,
+                    onTap: () => navigationProvider.navigateToIndex(1),
+                  ),
+                  NavigationIcon(
+                    label: 'Match',
+                    icon: navigationProvider.currentIndex == 2
+                        ? const Icon(Icons.favorite, color: CustomColors.primaryColor, size: 28)
+                        : Icon(Icons.favorite_border, color: Colors.grey[600], size: 28),
+                    isSelected: navigationProvider.currentIndex == 2,
+                    onTap: () => navigationProvider.navigateToIndex(2),
+                  ),
+                  NavigationIcon(
+                    label: 'Chats',
+                    icon: navigationProvider.currentIndex == 3
+                        ? const Icon(Icons.chat_bubble, color: CustomColors.primaryColor, size: 28)
+                        : Icon(Icons.chat_bubble_outline, color: Colors.grey[600], size: 28),
+                    isSelected: navigationProvider.currentIndex == 3,
+                    onTap: () => navigationProvider.navigateToIndex(3),
+                  ),
+                  NavigationIcon(
+                    label: 'Perfil',
+                    icon: navigationProvider.currentIndex == 4
+                        ? const Icon(Icons.person, color: CustomColors.primaryColor, size: 28)
+                        : Icon(Icons.person_outline, color: Colors.grey[600], size: 28),
+                    isSelected: navigationProvider.currentIndex == 4,
+                    onTap: () => navigationProvider.navigateToIndex(4),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
