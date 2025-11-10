@@ -5,28 +5,43 @@ import 'package:flutter/material.dart';
 import 'package:fox_mate_app/domain/entities/post_entity.dart';
 import 'package:fox_mate_app/domain/usecases/create_post_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/get_posts_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/get_user_posts_usecase.dart';
 
 enum PostStatus { initial, loading, success, error }
 
 class PostProvider extends ChangeNotifier {
   final GetPostsUsecase _getPostsUsecase;
+  final GetUserPostsUsecase _getUserPostsUsecase;
   final CreatePostUsecase _createPostUsecase;
 
   PostProvider(
     this._getPostsUsecase,
+    this._getUserPostsUsecase,
     this._createPostUsecase,
   ) {
     _initializePosts();
   }
 
   PostStatus _status = PostStatus.initial;
+  PostStatus _userPostsStatus = PostStatus.initial;
+  
   List<PostEntity> _posts = [];
+  List<PostEntity> _userPosts = [];
+  
   String? _errorMessage;
+  String? _userPostsErrorMessage;
+  
   StreamSubscription<List<PostEntity>>? _postsSubscription;
+  StreamSubscription<List<PostEntity>>? _userPostsSubscription;
 
   PostStatus get status => _status;
+  PostStatus get userPostsStatus => _userPostsStatus;
+  
   List<PostEntity> get posts => _posts;
+  List<PostEntity> get userPosts => _userPosts;
+  
   String? get errorMessage => _errorMessage;
+  String? get userPostsErrorMessage => _userPostsErrorMessage;
 
   void _initializePosts() {
     _status = PostStatus.loading;
@@ -45,6 +60,39 @@ class PostProvider extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  /// Load posts from a specific user
+  void loadUserPosts(String userId) {
+    // Cancel previous subscription if exists
+    _userPostsSubscription?.cancel();
+    
+    _userPostsStatus = PostStatus.loading;
+    _userPostsErrorMessage = null;
+    notifyListeners();
+
+    _userPostsSubscription = _getUserPostsUsecase.execute(userId).listen(
+      (posts) {
+        _userPosts = posts;
+        _userPostsStatus = PostStatus.success;
+        _userPostsErrorMessage = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        _userPostsErrorMessage = error.toString();
+        _userPostsStatus = PostStatus.error;
+        notifyListeners();
+      },
+    );
+  }
+
+  /// Clear user posts (useful for logout or changing users)
+  void clearUserPosts() {
+    _userPostsSubscription?.cancel();
+    _userPosts = [];
+    _userPostsStatus = PostStatus.initial;
+    _userPostsErrorMessage = null;
+    notifyListeners();
   }
 
   Future<void> createPost({
@@ -89,9 +137,18 @@ class PostProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearUserPostsError() {
+    _userPostsErrorMessage = null;
+    if (_userPostsStatus == PostStatus.error) {
+      _userPostsStatus = _userPosts.isNotEmpty ? PostStatus.success : PostStatus.initial;
+    }
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _postsSubscription?.cancel();
+    _userPostsSubscription?.cancel();
     super.dispose();
   }
 }

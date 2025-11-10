@@ -4,6 +4,10 @@ import 'package:fox_mate_app/domain/entities/post_entity.dart';
 
 abstract class PostRepository {
   Stream<List<PostEntity>> getPosts();
+  
+  /// Get posts from a specific user
+  Stream<List<PostEntity>> getUserPosts(String userId);
+  
   Future<void> createPost({
     required String authorId,
     required String authorName,
@@ -13,5 +17,6 @@ abstract class PostRepository {
     required List<String> tags,
     File? image,
   });
+  
   Future<void> deletePost(String postId);
 }

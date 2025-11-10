@@ -36,7 +36,8 @@ import 'package:fox_mate_app/providers/navigation_provider.dart';
 //import 'package:fox_mate_app/providers/notifications_provider.dart';
 import 'package:fox_mate_app/providers/theme_provider.dart';
 import 'package:provider/single_child_widget.dart';
-//import 'package:fox_mate_app/providers/user_provider.dart';
+import 'package:fox_mate_app/providers/user_provider.dart';
+import 'package:fox_mate_app/domain/usecases/get_user_posts_usecase.dart';
 
 class DependenciesInjection {
   static List<SingleChildWidget> get providers {
@@ -71,13 +72,12 @@ class DependenciesInjection {
     final SignOutUsecase signOutUsecase = SignOutUsecase(authRepository);
 
     final ForgotPasswordUseCase forgotPasswordUseCase = ForgotPasswordUseCase(authRepository);
-    //Esta linea se usará cuando se descomente el provider de UserProvider
-    final UpdateProfileUseCase updateProfileUseCase = UpdateProfileUseCase(
-      userRepository,
-    );
+
+    final UpdateProfileUseCase updateProfileUseCase = UpdateProfileUseCase(userRepository);
 
     // Posts UseCases
     final GetPostsUsecase getPostsUsecase = GetPostsUsecase(postRepository);
+    final GetUserPostsUsecase getUserPostsUsecase = GetUserPostsUsecase(postRepository);
     final CreatePostUsecase createPostUsecase = CreatePostUsecase(postRepository);
 
     // Events UseCases
@@ -120,6 +120,7 @@ class DependenciesInjection {
       ChangeNotifierProvider(
         create: (context) => PostProvider(
           getPostsUsecase,
+          getUserPostsUsecase,
           createPostUsecase,
         ),
       ),
@@ -132,9 +133,9 @@ class DependenciesInjection {
         ),
       ),
 
-      // ChangeNotifierProvider(
-      //   create: (context) => UserProvider(updateProfileUseCase, userRepository),
-      // ),
+      ChangeNotifierProvider(
+        create: (context) => UserProvider(updateProfileUseCase, userRepository),
+      ),
 
       // ChangeNotifierProvider(
       //   create: (context) => NotificationsProvider(

@@ -26,6 +26,25 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
+  Stream<List<PostEntity>> getUserPosts(String userId) {
+    return _firestore
+        .collection('posts')
+        .where('authorId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      // Ordenar en memoria después de obtener los datos
+      final posts = snapshot.docs.map((doc) {
+        return PostModel.fromJson(doc.data(), doc.id);
+      }).toList();
+      
+      // Ordenar por timestamp descendente
+      posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      
+      return posts;
+    });
+  }
+
+  @override
   Future<void> createPost({
     required String authorId,
     required String authorName,

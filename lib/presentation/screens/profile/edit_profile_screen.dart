@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
-import 'package:fox_mate_app/data/models/user_model.dart';
+import 'package:fox_mate_app/domain/entities/user_entity.dart';
+import 'package:fox_mate_app/providers/user_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  final UserModel user;
+  final UserEntity user;
 
   const EditProfileScreen({super.key, required this.user});
 
@@ -17,17 +19,20 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController nameController;
   late TextEditingController careerController;
+  late TextEditingController emailController;
   late TextEditingController semesterController;
   late TextEditingController bioController;
   late List<String> interests;
   TextEditingController newInterestController = TextEditingController();
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.user.name);
+    emailController = TextEditingController(text: widget.user.email);
     careerController = TextEditingController(text: widget.user.career);
     semesterController = TextEditingController(
       text: widget.user.semester.toString(),
@@ -39,6 +44,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void dispose() {
     nameController.dispose();
+    emailController.dispose();
     careerController.dispose();
     semesterController.dispose();
     bioController.dispose();
@@ -61,9 +67,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al seleccionar imagen: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar imagen: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -82,15 +93,102 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
-  void _saveProfile() {
-    final updatedUser = widget.user.copyWith(
-      name: nameController.text,
-      career: careerController.text,
-      semester: int.parse(semesterController.text),
-      bio: bioController.text,
-      interests: interests,
+  Future<void> _saveProfile() async {
+    // Validate fields
+    if (nameController.text.trim().isEmpty) {
+      _showErrorSnackBar('El nombre es requerido');
+      return;
+    }
+
+    if (emailController.text.trim().isEmpty) {
+      _showErrorSnackBar('El correo es requerido');
+      return;
+    }
+
+    if (careerController.text.trim().isEmpty) {
+      _showErrorSnackBar('La carrera es requerida');
+      return;
+    }
+
+    final semester = int.tryParse(semesterController.text);
+    if (semester == null || semester < 1 || semester > 12) {
+      _showErrorSnackBar('Ingresa un semestre válido (1-12)');
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final userProvider = context.read<UserProvider>();
+
+      // TODO: Upload image to Firebase Storage if _selectedImage is not null
+      // String? imageUrl;
+      // if (_selectedImage != null) {
+      //   imageUrl = await uploadImageToStorage(_selectedImage!);
+      // }
+
+      // Update profile in provider
+      await userProvider.updateProfile(
+        userId: widget.user.id,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        career: careerController.text.trim(),
+        semester: semester,
+        bio: bioController.text.trim(),
+        interests: interests,
+        // imageUrl: imageUrl ?? widget.user.imageUrl,
+      );
+
+      if (mounted) {
+        if (userProvider.userState == UserState.success) {
+          _showSuccessSnackBar('Perfil actualizado correctamente');
+          // Return true to indicate success
+          Navigator.pop(context, true);
+        } else if (userProvider.errorMessage != null) {
+          _showErrorSnackBar(userProvider.errorMessage!);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('Error al guardar: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
     );
-    Navigator.pop(context, updatedUser);
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
   }
 
   @override
@@ -102,10 +200,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: const Text(
           'Editar Perfil',
           style: TextStyle(
             color: Colors.black,
@@ -141,18 +239,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                             )
                           : ClipOval(
-                              child:
-                                  widget.user.imageUrl != null &&
+                              child: widget.user.imageUrl != null &&
                                       widget.user.imageUrl!.isNotEmpty
                                   ? Image.network(
                                       widget.user.imageUrl!,
                                       fit: BoxFit.cover,
                                       errorBuilder:
                                           (context, error, stackTrace) {
-                                            return Image.asset(
-                                              'assets/images/blue-circle.jpg',
-                                            );
-                                          },
+                                        return Image.asset(
+                                          'assets/images/blue-circle.jpg',
+                                        );
+                                      },
                                     )
                                   : Image.asset(
                                       'assets/images/blue-circle.jpg',
@@ -170,7 +267,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.camera_alt,
                           color: Colors.white,
                           size: 20,
@@ -182,7 +279,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
 
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
 
             Center(
               child: GestureDetector(
@@ -198,14 +295,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
 
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Nombre y Apellidos
-            Text(
+            const Text(
               'Nombre y Apellidos',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: nameController,
               decoration: InputDecoration(
@@ -223,21 +320,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
+
+                        const Text(
+              'Correo',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              keyboardType: TextInputType.emailAddress,
+              controller: emailController,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
 
             // Carrera
-            Text(
+            const Text(
               'Carrera',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: careerController,
               decoration: InputDecoration(
@@ -255,23 +384,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            // Año de estudio
-            Text(
-              'Año de estudio',
+            // Semestre actual que cursa el estudiante
+            const Text(
+              'Semestre que cursa',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: semesterController,
+              keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
@@ -287,21 +417,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Sobre mí
-            Text(
+            const Text(
               'Sobre mí',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: bioController,
               maxLines: 5,
@@ -320,18 +450,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: EdgeInsets.all(16),
+                contentPadding: const EdgeInsets.all(16),
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Intereses
-            Text(
+            const Text(
               'Intereses',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
 
             Wrap(
               spacing: 8,
@@ -339,9 +469,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               children: [
                 ...interests.asMap().entries.map((entry) {
                   return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Color(0xFF10B981).withOpacity(0.15),
+                      color: const Color(0xFF10B981).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -349,16 +480,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       children: [
                         Text(
                           entry.value,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF10B981),
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         GestureDetector(
                           onTap: () => _removeInterest(entry.key),
-                          child: Icon(
+                          child: const Icon(
                             Icons.close,
                             size: 16,
                             color: Color(0xFF10B981),
@@ -375,12 +506,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     _showAddInterestDialog();
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.add, size: 18, color: Colors.black87),
@@ -400,30 +532,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
 
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
 
             // Botón Guardar cambios
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _saveProfile,
+                onPressed: _isSaving ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: CustomColors.primaryColor,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   elevation: 0,
+                  disabledBackgroundColor: Colors.grey[400],
                 ),
-                child: Text(
-                  'Guardar cambios',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Guardar cambios',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
               ),
             ),
 
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -435,7 +579,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             'Añadir interés',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
@@ -487,7 +631,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: Text('Añadir'),
+              child: const Text('Añadir'),
             ),
           ],
         );
