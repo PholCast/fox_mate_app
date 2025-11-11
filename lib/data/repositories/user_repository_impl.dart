@@ -72,7 +72,11 @@ class UserRepositoryImpl extends UserRepository {
     try {
       final snapshot = await _firestore.collection(_collectionName).get();
       return snapshot.docs
-          .map((doc) => UserModel.fromJson(doc.data()))
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id; // Use document ID as user ID
+            return UserModel.fromJson(data);
+          })
           .toList();
     } catch (e) {
       print('Failed to get all users: ${e.toString()}');

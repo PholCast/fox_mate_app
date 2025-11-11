@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
-import 'package:fox_mate_app/data/models/user_model.dart';
+import 'package:fox_mate_app/domain/entities/user_entity.dart';
+import 'package:fox_mate_app/domain/usecases/like_user_usecase.dart';
+import 'package:fox_mate_app/providers/auth_provider.dart';
+import 'package:fox_mate_app/providers/user_provider.dart';
+import 'package:provider/provider.dart';
 import 'dart:ui';
-//import 'dart:math' as math;
 
 class MatchScreen extends StatefulWidget {
   const MatchScreen({super.key});
@@ -14,8 +17,7 @@ class MatchScreen extends StatefulWidget {
 
 class _MatchScreenState extends State<MatchScreen>
     with TickerProviderStateMixin {
-  List<UserModel> allUsers = getDummyUsers();
-  List<UserModel> filteredUsers = [];
+  List<UserEntity> filteredUsers = [];
   int currentIndex = 0;
 
   String? selectedCareer;
@@ -30,11 +32,30 @@ class _MatchScreenState extends State<MatchScreen>
   @override
   void initState() {
     super.initState();
-    filteredUsers = List.from(allUsers);
     _swipeAnimationController = AnimationController(
       duration: Duration(milliseconds: 300),
       vsync: this,
     );
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUsers();
+    });
+  }
+
+  void _loadUsers() {
+    final authProvider = context.read<AuthProvider>();
+    final userProvider = context.read<UserProvider>();
+    final currentUser = authProvider.currentUser;
+    
+    if (currentUser != null) {
+      userProvider.loadAllUsers(currentUser.id).then((_) {
+        if (mounted) {
+          setState(() {
+            filteredUsers = List.from(userProvider.allUsers);
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -43,29 +64,29 @@ class _MatchScreenState extends State<MatchScreen>
     super.dispose();
   }
 
-  Set<String> getAllCareers() {
-    return allUsers.map((user) => user.career).toSet();
+  Set<String> getAllCareers(List<UserEntity> users) {
+    return users.map((user) => user.career).where((career) => career.isNotEmpty).toSet();
   }
 
-  Set<String> getAllSemesters() {
-    return allUsers.map((user) => user.semester.toString()).toSet();
+  Set<String> getAllSemesters(List<UserEntity> users) {
+    return users.map((user) => user.semester.toString()).toSet();
   }
 
-  Set<String> getAllInterests() {
+  Set<String> getAllInterests(List<UserEntity> users) {
     Set<String> interests = {};
-    for (var user in allUsers) {
+    for (var user in users) {
       interests.addAll(user.interests);
     }
     return interests;
   }
 
-  void applyFilters() {
+  void applyFilters(List<UserEntity> allUsers) {
     setState(() {
       filteredUsers = allUsers.where((user) {
         bool matchesCareer =
             selectedCareer == null || user.career == selectedCareer;
         bool matchesSemester =
-            selectedSemester == null || user.semester == selectedSemester;
+            selectedSemester == null || user.semester.toString() == selectedSemester;
         bool matchesInterest =
             selectedInterest == null ||
             user.interests.contains(selectedInterest);
@@ -77,7 +98,7 @@ class _MatchScreenState extends State<MatchScreen>
     });
   }
 
-  void _showFilterModal(String filterType) {
+  void _showFilterModal(String filterType, List<UserEntity> allUsers) {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -92,17 +113,17 @@ class _MatchScreenState extends State<MatchScreen>
 
         switch (filterType) {
           case 'career':
-            options = getAllCareers();
+            options = getAllCareers(allUsers);
             selectedValue = selectedCareer;
             title = 'Carrera';
             break;
           case 'semester':
-            options = getAllSemesters();
+            options = getAllSemesters(allUsers);
             selectedValue = selectedSemester;
             title = 'Semestre';
             break;
           case 'interest':
-            options = getAllInterests();
+            options = getAllInterests(allUsers);
             selectedValue = selectedInterest;
             title = 'Intereses';
             break;
@@ -156,7 +177,7 @@ class _MatchScreenState extends State<MatchScreen>
                                 setState(() {
                                   selectedSemester = null;
                                 });
-                                applyFilters();
+                                applyFilters(allUsers);
                                 Navigator.pop(context);
                               },
                             ),
@@ -171,7 +192,7 @@ class _MatchScreenState extends State<MatchScreen>
                                     setState(() {
                                       selectedSemester = option;
                                     });
-                                    applyFilters();
+                                    applyFilters(allUsers);
                                     Navigator.pop(context);
                                   },
                                 ),
@@ -197,7 +218,7 @@ class _MatchScreenState extends State<MatchScreen>
                                       break;
                                   }
                                 });
-                                applyFilters();
+                                applyFilters(allUsers);
                                 Navigator.pop(context);
                               },
                             ),
@@ -216,7 +237,7 @@ class _MatchScreenState extends State<MatchScreen>
                                         break;
                                     }
                                   });
-                                  applyFilters();
+                                  applyFilters(allUsers);
                                   Navigator.pop(context);
                                 },
                               );
@@ -281,27 +302,108 @@ class _MatchScreenState extends State<MatchScreen>
     );
   }
 
-  void _handleSwipe(bool isLike) {
+  Future<void> _handleSwipe(bool isLike) async {
     if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
 
     final currentUser = filteredUsers[currentIndex];
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.currentUser?.id;
 
-    setState(() {
-      if (currentIndex < filteredUsers.length - 1) {
-        currentIndex++;
-      } else {
-        currentIndex = 0;
-      }
-      dragPosition = Offset.zero;
-      isDragging = false;
-    });
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Usuario no autenticado'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     if (isLike) {
-      _showMatchDialog(currentUser);
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final likeUserUseCase = context.read<LikeUserUseCase>();
+        final isMatch = await likeUserUseCase.execute(
+          currentUserId: currentUserId,
+          likedUserId: currentUser.id,
+        );
+
+        // Close loading indicator
+        if (mounted) {
+          Navigator.pop(context);
+        }
+
+        // Move to next user
+        setState(() {
+          if (currentIndex < filteredUsers.length - 1) {
+            currentIndex++;
+          } else {
+            currentIndex = 0;
+          }
+          dragPosition = Offset.zero;
+          isDragging = false;
+        });
+
+        // Show match dialog only if there's a mutual match
+        if (isMatch && mounted) {
+          _showMatchDialog(currentUser);
+        } else if (mounted) {
+          // Show a simple like confirmation
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Le diste like a ${currentUser.name}'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        // Close loading indicator
+        if (mounted) {
+          Navigator.pop(context);
+        }
+
+        // Move to next user even on error
+        setState(() {
+          if (currentIndex < filteredUsers.length - 1) {
+            currentIndex++;
+          } else {
+            currentIndex = 0;
+          }
+          dragPosition = Offset.zero;
+          isDragging = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } else {
+      // Just move to next user for dislike
+      setState(() {
+        if (currentIndex < filteredUsers.length - 1) {
+          currentIndex++;
+        } else {
+          currentIndex = 0;
+        }
+        dragPosition = Offset.zero;
+        isDragging = false;
+      });
     }
   }
 
-  void _showMatchDialog(UserModel matchedUser) {
+  void _showMatchDialog(UserEntity matchedUser) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -449,81 +551,124 @@ class _MatchScreenState extends State<MatchScreen>
 
   @override
   Widget build(BuildContext context) {
-    final hasUsers =
-        filteredUsers.isNotEmpty && currentIndex < filteredUsers.length;
-    final currentUser = hasUsers ? filteredUsers[currentIndex] : null;
+    return Consumer2<AuthProvider, UserProvider>(
+      builder: (context, authProvider, userProvider, child) {
+        final allUsers = userProvider.allUsers;
+        final hasUsers =
+            filteredUsers.isNotEmpty && currentIndex < filteredUsers.length;
+        final currentUser = hasUsers ? filteredUsers[currentIndex] : null;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: Text(
-          'Match',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: Spacing.padding,
-              vertical: 12,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildFilterButton(
-                    selectedCareer ?? 'Carrera',
-                    () => _showFilterModal('career'),
-                    selectedCareer != null,
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _buildFilterButton(
-                    selectedSemester ?? 'Semestre',
-                    () => _showFilterModal('semester'),
-                    selectedSemester != null,
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _buildFilterButton(
-                    selectedInterest ?? 'Intereses',
-                    () => _showFilterModal('interest'),
-                    selectedInterest != null,
-                  ),
-                ),
-              ],
+        // Apply filters when allUsers is loaded and no filters are applied yet
+        if (allUsers.isNotEmpty && 
+            filteredUsers.isEmpty && 
+            selectedCareer == null && 
+            selectedSemester == null && 
+            selectedInterest == null) {
+          // Use a post-frame callback to avoid setState during build
+          Future.microtask(() {
+            if (mounted) {
+              applyFilters(allUsers);
+            }
+          });
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            automaticallyImplyLeading: false,
+            centerTitle: true,
+            title: Text(
+              'Match',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(Spacing.padding),
-              child: hasUsers && currentUser != null
-                  ? _buildSwipeableCard(currentUser)
-                  : Center(
-                      child: Text(
-                        'No hay más usuarios con estos filtros',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          body: userProvider.allUsersState == UserState.loading
+              ? Center(child: CircularProgressIndicator())
+              : userProvider.allUsersState == UserState.error
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+                          SizedBox(height: 16),
+                          Text(
+                            userProvider.allUsersErrorMessage ?? 'Error al cargar usuarios',
+                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadUsers,
+                            child: Text('Reintentar'),
+                          ),
+                        ],
                       ),
+                    )
+                  : Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Spacing.padding,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildFilterButton(
+                                  selectedCareer ?? 'Carrera',
+                                  () => _showFilterModal('career', allUsers),
+                                  selectedCareer != null,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: _buildFilterButton(
+                                  selectedSemester ?? 'Semestre',
+                                  () => _showFilterModal('semester', allUsers),
+                                  selectedSemester != null,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: _buildFilterButton(
+                                  selectedInterest ?? 'Intereses',
+                                  () => _showFilterModal('interest', allUsers),
+                                  selectedInterest != null,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.all(Spacing.padding),
+                            child: hasUsers && currentUser != null
+                                ? _buildSwipeableCard(currentUser)
+                                : Center(
+                                    child: Text(
+                                      allUsers.isEmpty
+                                          ? 'No hay usuarios disponibles'
+                                          : 'No hay más usuarios con estos filtros',
+                                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildSwipeableCard(UserModel user) {
+  Widget _buildSwipeableCard(UserEntity user) {
     final screenWidth = MediaQuery.of(context).size.width;
     final threshold = screenWidth * 0.3;
 
@@ -607,7 +752,7 @@ class _MatchScreenState extends State<MatchScreen>
     );
   }
 
-  Widget _buildProfileCard(UserModel user) {
+  Widget _buildProfileCard(UserEntity user) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),

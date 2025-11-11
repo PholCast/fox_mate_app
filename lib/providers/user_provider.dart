@@ -14,10 +14,18 @@ class UserProvider extends ChangeNotifier {
   UserState _userState = UserState.initial;
   UserEntity? _user;
   String? _errorMessage;
+  
+  List<UserEntity> _allUsers = [];
+  UserState _allUsersState = UserState.initial;
+  String? _allUsersErrorMessage;
 
   UserState get userState => _userState;
   UserEntity? get user => _user;
   String? get errorMessage => _errorMessage;
+  
+  List<UserEntity> get allUsers => _allUsers;
+  UserState get allUsersState => _allUsersState;
+  String? get allUsersErrorMessage => _allUsersErrorMessage;
 
   // Individual getters for all user properties
   String get userId => _user?.id ?? '';
@@ -155,10 +163,33 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Load all users from Firestore (excluding current user)
+  Future<void> loadAllUsers(String currentUserId) async {
+    _allUsersState = UserState.loading;
+    _allUsersErrorMessage = null;
+    notifyListeners();
+
+    try {
+      final users = await _userRepository.getAllUsers();
+      // Filter out the current user
+      _allUsers = users.where((user) => user.id != currentUserId).toList();
+      _allUsersState = UserState.success;
+      _allUsersErrorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      _allUsersErrorMessage = 'Error al cargar usuarios: ${e.toString()}';
+      _allUsersState = UserState.error;
+      notifyListeners();
+    }
+  }
+
   /// Clear all user data (for logout)
   void clearUserData() {
     _user = null;
     _errorMessage = null;
+    _allUsers = [];
+    _allUsersState = UserState.initial;
+    _allUsersErrorMessage = null;
     _setState(UserState.initial);
   }
 

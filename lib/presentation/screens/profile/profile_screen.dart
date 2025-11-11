@@ -7,6 +7,7 @@ import 'package:fox_mate_app/presentation/screens/profile/edit_profile_screen.da
 import 'package:fox_mate_app/presentation/screens/auth/welcome_screen.dart';
 import 'package:fox_mate_app/presentation/screens/home/widgets/post_card.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart';
+import 'package:fox_mate_app/providers/notifications_provider.dart';
 import 'package:fox_mate_app/providers/user_provider.dart';
 import 'package:fox_mate_app/providers/post_provider.dart';
 import 'package:provider/provider.dart';
@@ -83,10 +84,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final authProvider = context.read<AuthProvider>();
       final userProvider = context.read<UserProvider>();
       final postProvider = context.read<PostProvider>();
+      final notificationsProvider = context.read<NotificationsProvider>();
 
       // Clear user data
       userProvider.clearUserData();
       postProvider.clearUserPosts();
+      notificationsProvider.reset();
 
       // Sign out
       await authProvider.signOut();

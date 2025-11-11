@@ -3,14 +3,15 @@ import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:fox_mate_app/presentation/screens/navigation/components/navigation_icon.dart';
 import 'package:fox_mate_app/providers/navigation_provider.dart';
+import 'package:fox_mate_app/providers/notifications_provider.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   const CustomBottomNavigationBar({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<NavigationProvider>(
-      builder: (context, navigationProvider, child) {
+    return Consumer2<NavigationProvider, NotificationsProvider>(
+      builder: (context, navigationProvider, notificationsProvider, child) {
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -53,6 +54,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                     onTap: () => navigationProvider.navigateToIndex(2),
                   ),
                   NavigationIcon(
+                    badgeCount: notificationsProvider.unreadNotificationsCount,
                     label: 'Chats',
                     icon: navigationProvider.currentIndex == 3
                         ? const Icon(Icons.chat_bubble, color: CustomColors.primaryColor, size: 28)
