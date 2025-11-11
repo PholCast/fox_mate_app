@@ -507,7 +507,7 @@ class _MatchScreenState extends State<MatchScreen>
                         elevation: 0,
                       ),
                       child: Text(
-                        'Enviar mensaje',
+                        'Aceptar',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -517,32 +517,6 @@ class _MatchScreenState extends State<MatchScreen>
                   ),
 
                   SizedBox(height: 12),
-
-                  // Botón Seguir buscando
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        foregroundColor: Colors.black87,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Seguir buscando',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

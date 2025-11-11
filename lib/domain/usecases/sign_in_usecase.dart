@@ -12,7 +12,7 @@ class SignInUsecase {
     required String password,
   }) async {
     if(email.isEmpty || password.isEmpty){
-      return AuthResult.failure('All fields are required');
+      return AuthResult.failure('Todos los campos son obligatorios');
     }
 
     if(!isValidEmail(email)){

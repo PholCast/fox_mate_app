@@ -137,7 +137,7 @@ class PostCard extends StatelessWidget {
                 child: Text(
                   '#$tag',
                   style: const TextStyle(
-                    color: Color(0xFF10B981),
+                    color: CustomColors.secondaryColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),

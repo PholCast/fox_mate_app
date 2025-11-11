@@ -5,7 +5,7 @@ import 'package:fox_mate_app/components/primary_button.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
 import 'package:fox_mate_app/presentation/screens/auth/forgot_password_screen.dart';
-import 'package:flutter_svg/svg.dart';
+//import 'package:flutter_svg/svg.dart';
 import 'package:fox_mate_app/presentation/screens/auth/signup_screen.dart';
 import 'package:fox_mate_app/presentation/wrappers/auth_wrapper.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart';
@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Email is required';
+                          return 'El correo es obligatorio';
                         }
                         return null;
                       },
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Password is required';
+                          return 'La contraseña es obligatoria';
                         }
                         return null;
                       },
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 40),  
+                  SizedBox(height: 60),  
                   Consumer<AuthProvider>(
                       builder: (context, authProvider, child) {
                         return SizedBox(
@@ -166,32 +166,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   );}),
                   
                   SizedBox(height: 18),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    child: OutlinedButton(
-                      onPressed: () => print('Iniciar sesión con Microsoft'),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 32.0),
-                        side: BorderSide(color: Theme.of(context).colorScheme.tertiary, width: 1.5),  // Borde azul de 2 de grosor
-                        backgroundColor: Colors.transparent,  // Fondo transparente
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                  // SizedBox(
+                  //   width: MediaQuery.of(context).size.width * 0.8,
+                  //   child: OutlinedButton(
+                  //     onPressed: () => print('Iniciar sesión con Microsoft'),
+                  //     style: OutlinedButton.styleFrom(
+                  //       padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 32.0),
+                  //       side: BorderSide(color: Theme.of(context).colorScheme.tertiary, width: 1.5),  // Borde azul de 2 de grosor
+                  //       backgroundColor: Colors.transparent,  // Fondo transparente
+                  //     ),
+                  //     child: FittedBox(
+                  //       fit: BoxFit.scaleDown,
+                  //       child: Row(
+                  //         mainAxisAlignment: MainAxisAlignment.center,
                         
-                          children: [
-                            SvgPicture.asset('assets/icons/microsoft-icon.svg', width: 25, height: 35),
-                            SizedBox(width:Spacing.space),
-                            Text('Iniciar sesión con Microsoft', style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800
-                            ),),
-                          ],
-                        ),
-                      ),
+                  //         children: [
+                  //           SvgPicture.asset('assets/icons/microsoft-icon.svg', width: 25, height: 35),
+                  //           SizedBox(width:Spacing.space),
+                  //           Text('Iniciar sesión con Microsoft', style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  //             fontWeight: FontWeight.w800
+                  //           ),),
+                  //         ],
+                  //       ),
+                  //     ),
             
-                    ),
-                  ),
+                  //   ),
+                  // ),
                   SizedBox(height: 15),
                   RichText(
                     text: TextSpan(
