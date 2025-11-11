@@ -66,6 +66,7 @@ class NotificationsProvider extends ChangeNotifier {
             notifyListeners();
           },
           onError: (error) {
+            print('Notification stream error: $error');
             _state = NotificationStatus.error;
             _errorMessage = error.toString();
             notifyListeners();

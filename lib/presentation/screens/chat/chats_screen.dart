@@ -4,6 +4,7 @@ import 'package:fox_mate_app/constants/spacing.dart';
 import 'package:fox_mate_app/data/models/chat_model.dart';
 import 'package:fox_mate_app/domain/entities/match_notification.dart';
 import 'package:fox_mate_app/presentation/screens/chat/messages_screen.dart';
+import 'package:fox_mate_app/providers/auth_provider.dart';
 import 'package:fox_mate_app/providers/notifications_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -19,10 +20,44 @@ class _ChatsScreenState extends State<ChatsScreen> {
   TextEditingController searchController = TextEditingController();
   String searchQuery = '';
 
+
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scrollController.addListener(_onScroll);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      final notificationsProvider = context.read<NotificationsProvider>();
+
+      if (authProvider.currentUser != null) {
+        notificationsProvider.initializeNotifications(
+          authProvider.currentUser!.id,
+        );
+      }
+    });
+  }
   @override
   void dispose() {
+    _scrollController.dispose();
     searchController.dispose();
     super.dispose();
+  }
+
+    _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.8) {
+      final authProvider = context.read<AuthProvider>();
+      final notificationsProvider = context.read<NotificationsProvider>();
+      if (authProvider.currentUser != null && notificationsProvider.hasMore) {
+        notificationsProvider.loadMoreNotifications(
+          authProvider.currentUser!.id,
+        );
+      }
+    }
   }
 
   List<Chat> getFilteredChats() {
@@ -143,6 +178,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               // Lista de chats y notificaciones
               Expanded(
                 child: ListView(
+                  controller: _scrollController,
                   padding: EdgeInsets.zero,
                   children: [
                     // Chats section
