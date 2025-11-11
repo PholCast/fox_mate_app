@@ -16,7 +16,6 @@ class ChatsScreen extends StatefulWidget {
 }
 
 class _ChatsScreenState extends State<ChatsScreen> {
-  List<Chat> chats = getDummyChats();
   TextEditingController searchController = TextEditingController();
   String searchQuery = '';
 
@@ -60,38 +59,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
     }
   }
 
-  List<Chat> getFilteredChats() {
-    if (searchQuery.isEmpty) {
-      return chats;
-    }
-    return chats.where((chat) {
-      final nameLower = chat.userName.toLowerCase();
-      final messageLower = chat.lastMessage.toLowerCase();
-      final queryLower = searchQuery.toLowerCase();
-      return nameLower.contains(queryLower) || messageLower.contains(queryLower);
-    }).toList();
-  }
-
-  String _getTimeString(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-
-    if (difference.inDays == 0) {
-      // Hoy - mostrar hora
-      final hour = timestamp.hour;
-      final minute = timestamp.minute.toString().padLeft(2, '0');
-      final period = hour >= 12 ? 'PM' : 'AM';
-      final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-      return '$displayHour:$minute $period';
-    } else if (difference.inDays == 1) {
-      return 'Ayer';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d';
-    } else {
-      return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
-    }
-  }
-
   String _getNotificationTimeString(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
@@ -117,7 +84,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredChats = getFilteredChats();
 
     return Consumer<NotificationsProvider>(
       builder: (context, notificationsProvider, child) {
@@ -133,7 +99,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
             titleSpacing: Spacing.padding,
             centerTitle: false,
             title: Text(
-              'Chats',
+              'Notificaciones',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 24,
@@ -143,35 +109,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
           ),
           body: Column(
             children: [
-              // Barra de búsqueda
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: Spacing.padding, vertical: 12),
-                child: TextField(
-                  controller: searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Buscar chats',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                ),
-              ),
-
               // Divisor
               Divider(height: 1, color: Colors.grey[200]),
 
@@ -182,14 +119,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
                   padding: EdgeInsets.zero,
                   children: [
                     // Chats section
-                    if (filteredChats.isNotEmpty) ...[
-                      ...filteredChats.map((chat) => _buildChatItem(chat)),
-                    ] else if (notifications.isEmpty)
+                    if (notifications.isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.all(32.0),
                           child: Text(
-                            'No hay chats',
+                            'No hay Notificaciones',
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ),
@@ -197,20 +132,10 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
                     // Notifications section
                     if (notifications.isNotEmpty) ...[
-                      if (filteredChats.isNotEmpty)
-                        Divider(height: 1, color: Colors.grey[200]),
                       Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: Spacing.padding,
                           vertical: 12,
-                        ),
-                        child: Text(
-                          'Notificaciones',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
                         ),
                       ),
                       ...notifications.map((notification) => _buildNotificationItem(
@@ -228,111 +153,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
     );
   }
 
-  Widget _buildChatItem(Chat chat) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MessagesScreen(chat: chat),
-          ),
-        );
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: Spacing.padding,
-          vertical: 12,
-        ),
-        child: Row(
-          children: [
-            // Avatar
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: NetworkImage(chat.userImage),
-            ),
-            SizedBox(width: 12),
-
-            // Nombre y mensaje
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        chat.userName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        _getTimeString(chat.timestamp),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          chat.lastMessage,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: chat.unreadCount > 0
-                                ? Colors.black87
-                                : Colors.grey[600],
-                            fontWeight: chat.unreadCount > 0
-                                ? FontWeight.w500
-                                : FontWeight.normal,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (chat.unreadCount > 0) ...[
-                        SizedBox(width: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: CustomColors.primaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: BoxConstraints(
-                            minWidth: 24,
-                            minHeight: 24,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${chat.unreadCount}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildNotificationItem(
     MatchNotification notification,
     NotificationsProvider notificationsProvider,
@@ -343,7 +163,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
         if (!notification.isRead) {
           notificationsProvider.markNotificationsAsRead(notification.id);
         }
-        // TODO: Navigate to match or chat screen
       },
       child: Container(
         padding: EdgeInsets.symmetric(

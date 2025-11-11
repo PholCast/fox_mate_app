@@ -159,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               _handleLogin();
                             },
                       title: authProvider.authStatus == AuthStatus.loading
-                                    ? 'Loading...'
+                                    ? 'Cargando...'
                                     :'Iniciar Sesión',
                       verticalPadding: 18,
                     ),

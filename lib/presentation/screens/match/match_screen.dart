@@ -492,7 +492,6 @@ class _MatchScreenState extends State<MatchScreen>
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        // Aquí iría la navegación al chat
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: CustomColors.primaryColor,
