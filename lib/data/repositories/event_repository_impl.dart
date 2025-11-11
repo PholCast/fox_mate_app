@@ -13,16 +13,42 @@ class EventRepositoryImpl implements EventRepository {
   EventRepositoryImpl(this._firestore, this._storage);
 
   @override
-  Stream<List<EventEntity>> getEvents() {
+  Stream<List<EventEntity>> getEvents({int limit = 10}) {
     return _firestore
         .collection('events')
         .orderBy('eventDate', descending: false)
+        .limit(limit)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         return EventModel.fromJson(doc.data(), doc.id);
       }).toList();
     });
+  }
+
+  @override
+  Future<List<EventEntity>> getEventsPaginated({
+    required int limit,
+    EventEntity? lastEvent,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection('events')
+          .orderBy('eventDate', descending: false)
+          .limit(limit);
+
+      if (lastEvent != null) {
+        final lastDoc = await _firestore.collection('events').doc(lastEvent.id).get();
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      return snapshot.docs.map((doc) {
+        return EventModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    } catch (e) {
+      throw Exception('Error loading paginated events: ${e.toString()}');
+    }
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/domain/entities/post_entity.dart';
+import 'package:fox_mate_app/presentation/screens/home/post_detail_screen.dart';
 
 class PostCard extends StatelessWidget {
   final PostEntity post;
@@ -37,115 +38,189 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    // ✨ NUEVO: GestureDetector para navegar al detalle
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PostDetailScreen(post: post),
           ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (post.authorProfileImage != null &&
-                  post.authorProfileImage!.isNotEmpty)
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage: NetworkImage(post.authorProfileImage!),
-                )
-              else
-                CircleAvatar(
-                  backgroundColor: CustomColors.primaryColor,
-                  radius: 20,
-                  child: Text(
-                    post.authorInitials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      post.authorName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                    Text(
-                      _getTimeAgo(post.timestamp),
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (showMenu && onMenuPressed != null)
-                IconButton(
-                  icon: const Icon(Icons.more_vert, size: 20),
-                  color: Colors.grey[600],
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: onMenuPressed,
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            post.content,
-            style: const TextStyle(fontSize: 15, height: 1.4),
-          ),
-          if (post.imageUrl != null) ...[
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                post.imageUrl!,
-                width: double.infinity,
-                height: 200,
-                fit: BoxFit.cover,
-              ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: post.tags.map((tag) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  '#$tag',
-                  style: const TextStyle(
-                    color: Color(0xFF10B981),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (post.authorProfileImage != null &&
+                    post.authorProfileImage!.isNotEmpty)
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: NetworkImage(post.authorProfileImage!),
+                    onBackgroundImageError: (exception, stackTrace) {
+                      // Manejar error de carga de imagen silenciosamente
+                    },
+                  )
+                else
+                  CircleAvatar(
+                    backgroundColor: CustomColors.primaryColor,
+                    radius: 20,
+                    child: Text(
+                      post.authorInitials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.authorName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        _getTimeAgo(post.timestamp),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ],
+                if (showMenu && onMenuPressed != null)
+                  // ✨ NUEVO: GestureDetector para que el menú no active la navegación
+                  GestureDetector(
+                    onTap: () {
+                      // Evitar que el tap del menú active la navegación
+                      onMenuPressed!();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.more_vert,
+                        size: 20,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              post.content,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+              maxLines: 4, // ✨ NUEVO: Limitar a 4 líneas en el card
+              overflow: TextOverflow.ellipsis, // ✨ NUEVO: Mostrar ... si es muy largo
+            ),
+            if (post.imageUrl != null) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  post.imageUrl!,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  // ✨ NUEVO: Loading indicator
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: CustomColors.primaryColor,
+                        ),
+                      ),
+                    );
+                  },
+                  // ✨ NUEVO: Error handling
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image,
+                              size: 50,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Error al cargar imagen',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: post.tags.map((tag) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    '#$tag',
+                    style: const TextStyle(
+                      color: Color(0xFF10B981),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }

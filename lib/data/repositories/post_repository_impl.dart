@@ -13,10 +13,11 @@ class PostRepositoryImpl implements PostRepository {
   PostRepositoryImpl(this._firestore, this._storage);
 
   @override
-  Stream<List<PostEntity>> getPosts() {
+  Stream<List<PostEntity>> getPosts({int limit = 10}) {
     return _firestore
         .collection('posts')
         .orderBy('timestamp', descending: true)
+        .limit(limit)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -42,6 +43,31 @@ class PostRepositoryImpl implements PostRepository {
       
       return posts;
     });
+  }
+
+  @override
+  Future<List<PostEntity>> getPostsPaginated({
+    required int limit,
+    PostEntity? lastPost,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection('posts')
+          .orderBy('timestamp', descending: true)
+          .limit(limit);
+
+      if (lastPost != null) {
+        final lastDoc = await _firestore.collection('posts').doc(lastPost.id).get();
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final snapshot = await query.get();
+      return snapshot.docs.map((doc) {
+        return PostModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    } catch (e) {
+      throw Exception('Error loading paginated posts: ${e.toString()}');
+    }
   }
 
   @override

@@ -5,19 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:fox_mate_app/domain/entities/event_entity.dart';
 import 'package:fox_mate_app/domain/usecases/create_event_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/get_events_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/get_events_paginated_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/toggle_attendance_usecase.dart';
 
-enum EventStatus { initial, loading, success, error }
+enum EventStatus { initial, loading, success, error, loadingMore }
 
 class EventProvider extends ChangeNotifier {
   final GetEventsUsecase _getEventsUsecase;
   final CreateEventUsecase _createEventUsecase;
   final ToggleAttendanceUsecase _toggleAttendanceUsecase;
+  final GetEventsPaginatedUsecase _getEventsPaginatedUsecase;
 
   EventProvider(
     this._getEventsUsecase,
     this._createEventUsecase,
     this._toggleAttendanceUsecase,
+    this._getEventsPaginatedUsecase,
   ) {
     _initializeEvents();
   }
@@ -26,10 +29,14 @@ class EventProvider extends ChangeNotifier {
   List<EventEntity> _events = [];
   String? _errorMessage;
   StreamSubscription<List<EventEntity>>? _eventsSubscription;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
 
   EventStatus get status => _status;
   List<EventEntity> get events => _events;
   String? get errorMessage => _errorMessage;
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _isLoadingMore;
 
   void _initializeEvents() {
     _status = EventStatus.loading;
@@ -40,6 +47,7 @@ class EventProvider extends ChangeNotifier {
         _events = events;
         _status = EventStatus.success;
         _errorMessage = null;
+        _hasMore = events.length >= 10;
         notifyListeners();
       },
       onError: (error) {
@@ -48,6 +56,42 @@ class EventProvider extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  Future<void> loadMoreEvents() async {
+    if (_isLoadingMore || !_hasMore || _events.isEmpty) return;
+
+    try {
+      _isLoadingMore = true;
+      _status = EventStatus.loadingMore;
+      notifyListeners();
+
+      final lastEvent = _events.last;
+      final newEvents = await _getEventsPaginatedUsecase.execute(
+        limit: 10,
+        lastEvent: lastEvent,
+      );
+
+      if (newEvents.isEmpty) {
+        _hasMore = false;
+      } else {
+        // Evitar duplicados
+        final existingIds = _events.map((e) => e.id).toSet();
+        final uniqueNewEvents = newEvents.where((e) => !existingIds.contains(e.id)).toList();
+        
+        _events.addAll(uniqueNewEvents);
+        _hasMore = uniqueNewEvents.length >= 10;
+      }
+
+      _status = EventStatus.success;
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _status = EventStatus.error;
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
   }
 
   Future<void> createEvent({

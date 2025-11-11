@@ -20,11 +20,34 @@ class _PostScreenState extends State<PostScreen> {
   final TextEditingController searchController = TextEditingController();
   String searchQuery = '';
   bool _isRefreshing = false;
+  
+  // ✨ NUEVO: ScrollController para scroll infinito
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // ✨ NUEVO: Listener para detectar scroll
+    _scrollController.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
     searchController.dispose();
+    _scrollController.dispose(); // ✨ NUEVO: Limpiar controller
     super.dispose();
+  }
+
+  // ✨ NUEVO: Detectar cuando llega al final
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Cargar más cuando estemos cerca del final
+      final postProvider = context.read<PostProvider>();
+      if (!postProvider.isLoadingMore && postProvider.hasMore) {
+        postProvider.loadMorePosts();
+      }
+    }
   }
 
   Set<String> getAllTags(List<PostEntity> posts) {
@@ -391,15 +414,28 @@ class _PostScreenState extends State<PostScreen> {
                         onRefresh: _handleRefresh,
                         color: CustomColors.primaryColor,
                         child: ListView.separated(
+                          controller: _scrollController, // ✨ NUEVO: Controller para scroll infinito
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: EdgeInsets.symmetric(
                             horizontal: Spacing.padding,
                             vertical: 8,
                           ),
-                          itemCount: filteredPosts.length,
+                          // ✨ NUEVO: Agregar +1 para el indicador de carga
+                          itemCount: filteredPosts.length + (postProvider.hasMore ? 1 : 0),
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
+                            // ✨ NUEVO: Mostrar indicador de carga al final
+                            if (index >= filteredPosts.length) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: CustomColors.primaryColor,
+                                  ),
+                                ),
+                              );
+                            }
                             return PostCard(post: filteredPosts[index]);
                           },
                         ),
@@ -444,5 +480,4 @@ class _PostScreenState extends State<PostScreen> {
       ),
     );
   }
-
 }

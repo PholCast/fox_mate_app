@@ -19,11 +19,29 @@ class _EventsScreenState extends State<EventsScreen> {
   final TextEditingController searchController = TextEditingController();
   String searchQuery = '';
   bool _isRefreshing = false;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
     searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final eventProvider = context.read<EventProvider>();
+      if (!eventProvider.isLoadingMore && eventProvider.hasMore) {
+        eventProvider.loadMoreEvents();
+      }
+    }
   }
 
   Set<String> getAllCategories(List<EventEntity> events) {
@@ -486,15 +504,26 @@ class _EventsScreenState extends State<EventsScreen> {
                         onRefresh: _handleRefresh,
                         color: CustomColors.primaryColor,
                         child: ListView.separated(
+                          controller: _scrollController,
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: EdgeInsets.symmetric(
                             horizontal: Spacing.padding,
                             vertical: 8,
                           ),
-                          itemCount: filteredEvents.length,
+                          itemCount: filteredEvents.length + (eventProvider.hasMore ? 1 : 0),
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 16),
                           itemBuilder: (context, index) {
+                            if (index >= filteredEvents.length) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: CustomColors.primaryColor,
+                                  ),
+                                ),
+                              );
+                            }
                             return _buildEventCard(filteredEvents[index]);
                           },
                         ),

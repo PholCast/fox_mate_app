@@ -20,6 +20,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +29,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
     });
+
+    // Listener para detectar cuando se llegue al final del scroll
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Cargar más cuando esté a 200px del final
+      _loadMoreUserPosts();
+    }
+  }
+
+  void _loadMoreUserPosts() {
+    final postProvider = context.read<PostProvider>();
+    if (!postProvider.isLoadingMoreUserPosts && postProvider.hasMoreUserPosts) {
+      postProvider.loadMoreUserPosts();
+    }
   }
 
   void _loadUserData() {
@@ -42,8 +69,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Load full profile from Firestore
       userProvider.loadUserProfile(user.id);
 
-      // Load user posts
-      postProvider.loadUserPosts(user.id);
+      // Load user posts with pagination
+      postProvider.loadUserPostsPaginated(user.id);
     }
   }
 
@@ -134,7 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (mounted) {
                       final user = userProvider.user ?? authProvider.currentUser;
                       if (user != null) {
-                        postProvider.loadUserPosts(user.id);
+                        postProvider.loadUserPostsPaginated(user.id);
                       }
                     }
                   });
@@ -293,9 +320,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return RefreshIndicator(
             onRefresh: () async {
               await userProvider.loadUserProfile(user.id);
-              postProvider.loadUserPosts(user.id);
+              postProvider.loadUserPostsPaginated(user.id);
             },
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -598,24 +626,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                         // Display posts
                         else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: postProvider.userPosts.length,
-                            itemBuilder: (context, index) {
-                              final post = postProvider.userPosts[index];
-                              return Column(
-                                children: [
-                                  PostCard(
-                                    post: post,
-                                    showMenu: true,
-                                    onMenuPressed: () => _showPostMenu(context, post, postProvider),
+                          Column(
+                            children: [
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: postProvider.userPosts.length,
+                                itemBuilder: (context, index) {
+                                  final post = postProvider.userPosts[index];
+                                  return Column(
+                                    children: [
+                                      PostCard(
+                                        post: post,
+                                        showMenu: true,
+                                        onMenuPressed: () => _showPostMenu(context, post, postProvider),
+                                      ),
+                                      if (index < postProvider.userPosts.length - 1)
+                                        const SizedBox(height: 12),
+                                    ],
+                                  );
+                                },
+                              ),
+                              
+                              // Loading indicator for pagination
+                              if (postProvider.isLoadingMoreUserPosts)
+                                const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
                                   ),
-                                  if (index < postProvider.userPosts.length - 1)
-                                    const SizedBox(height: 12),
-                                ],
-                              );
-                            },
+                                ),
+                              
+                              // End message
+                              if (!postProvider.hasMoreUserPosts && postProvider.userPosts.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Text(
+                                    'No hay más publicaciones',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                       ],
                     ),

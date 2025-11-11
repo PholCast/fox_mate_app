@@ -11,10 +11,13 @@ import 'package:fox_mate_app/domain/usecases/create_event_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/create_post_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/delete_post_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/get_events_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/get_events_paginated_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/get_posts_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/get_posts_paginated_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/get_user_posts_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/toggle_attendance_usecase.dart';
-import 'package:fox_mate_app/domain/usecases/like_user_usecase.dart';
 import 'package:fox_mate_app/domain/usecases/update_post_usecase.dart';
+import 'package:fox_mate_app/domain/usecases/like_user_usecase.dart';
 import 'package:fox_mate_app/providers/event_provider.dart';
 import 'package:fox_mate_app/providers/post_provider.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +44,6 @@ import 'package:fox_mate_app/providers/notifications_provider.dart';
 import 'package:fox_mate_app/providers/theme_provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:fox_mate_app/providers/user_provider.dart';
-import 'package:fox_mate_app/domain/usecases/get_user_posts_usecase.dart';
 
 class DependenciesInjection {
   static List<SingleChildWidget> get providers {
@@ -52,7 +54,8 @@ class DependenciesInjection {
 
     // Repositories
     final AuthRepository authRepository = AuthRepositoryImpl(firebaseAuth);
-    final UserRepository userRepository = UserRepositoryImpl(firebaseFirestore, firebaseStorage, firebaseAuth);
+    final UserRepository userRepository =
+        UserRepositoryImpl(firebaseFirestore, firebaseStorage, firebaseAuth);
     final NavigationRepository navigationRepository =
         NavigationRepositoryImpl();
     final PostRepository postRepository = PostRepositoryImpl(
@@ -67,38 +70,59 @@ class DependenciesInjection {
     final NotificationsRepository notificationsRepository =
         NotificationsRepositoryImpl(firestore: firebaseFirestore);
 
-    // UseCases
+    // ========================
+    // UseCases - Autenticación
+    // ========================
     final SignInUsecase signInUsecase = SignInUsecase(authRepository);
     final SignUpUsecase signUpUsecase = SignUpUsecase(
       authRepository,
       userRepository,
     );
     final SignOutUsecase signOutUsecase = SignOutUsecase(authRepository);
+    final ForgotPasswordUseCase forgotPasswordUseCase =
+        ForgotPasswordUseCase(authRepository);
+    final UpdateProfileUseCase updateProfileUseCase =
+        UpdateProfileUseCase(userRepository);
 
-    final ForgotPasswordUseCase forgotPasswordUseCase = ForgotPasswordUseCase(authRepository);
-
-    final UpdateProfileUseCase updateProfileUseCase = UpdateProfileUseCase(userRepository);
-
-    // Posts UseCases
+    // ========================
+    // UseCases - Publicaciones
+    // ========================
     final GetPostsUsecase getPostsUsecase = GetPostsUsecase(postRepository);
-    final GetUserPostsUsecase getUserPostsUsecase = GetUserPostsUsecase(postRepository);
-    final CreatePostUsecase createPostUsecase = CreatePostUsecase(postRepository);
-    final DeletePostUsecase deletePostUsecase = DeletePostUsecase(postRepository);
-    final UpdatePostUsecase updatePostUsecase = UpdatePostUsecase(postRepository);
+    final GetUserPostsUsecase getUserPostsUsecase =
+        GetUserPostsUsecase(postRepository);
+    final CreatePostUsecase createPostUsecase =
+        CreatePostUsecase(postRepository);
+    final DeletePostUsecase deletePostUsecase =
+        DeletePostUsecase(postRepository);
+    final UpdatePostUsecase updatePostUsecase =
+        UpdatePostUsecase(postRepository);
+    final GetPostsPaginatedUsecase getPostsPaginatedUsecase =
+        GetPostsPaginatedUsecase(postRepository);
 
-    // Match UseCases
+    // ========================
+    // UseCases - Eventos
+    // ========================
+    final GetEventsUsecase getEventsUsecase =
+        GetEventsUsecase(eventRepository);
+    final CreateEventUsecase createEventUsecase =
+        CreateEventUsecase(eventRepository);
+    final ToggleAttendanceUsecase toggleAttendanceUsecase =
+        ToggleAttendanceUsecase(eventRepository);
+    final GetEventsPaginatedUsecase getEventsPaginatedUsecase =
+        GetEventsPaginatedUsecase(eventRepository);
+
+    // ========================
+    // UseCases - Match / Likes
+    // ========================
     final LikeUserUseCase likeUserUseCase = LikeUserUseCase(
       matchRepository,
       notificationsRepository,
       userRepository,
     );
 
-    // Events UseCases
-    final GetEventsUsecase getEventsUsecase = GetEventsUsecase(eventRepository);
-    final CreateEventUsecase createEventUsecase = CreateEventUsecase(eventRepository);
-    final ToggleAttendanceUsecase toggleAttendanceUsecase = ToggleAttendanceUsecase(eventRepository);
-
-    // Notifications UseCases
+    // ========================
+    // UseCases - Notificaciones
+    // ========================
     final GetNotificationsUseCase getNotificationsUseCase =
         GetNotificationsUseCase(notificationsRepository);
     final GetNotificationsStreamUseCase getNotificationsStreamUseCase =
@@ -109,18 +133,21 @@ class DependenciesInjection {
         getUnreadNotificationsCountStreamUseCase =
         GetUnreadNotificationsCountStreamUseCase(notificationsRepository);
 
+    // ========================
+    // Providers
+    // ========================
     return [
       ChangeNotifierProvider(create: (context) => ThemeProvider()),
+
       ChangeNotifierProvider(
-        create:
-            (context) => auth_provider.AuthProvider(
-              signInUsecase,
-              signUpUsecase,
-              signOutUsecase,
-              forgotPasswordUseCase,
-              authRepository,
-              userRepository,
-            ),
+        create: (context) => auth_provider.AuthProvider(
+          signInUsecase,
+          signUpUsecase,
+          signOutUsecase,
+          forgotPasswordUseCase,
+          authRepository,
+          userRepository,
+        ),
       ),
 
       ChangeNotifierProvider(
@@ -134,6 +161,7 @@ class DependenciesInjection {
           createPostUsecase,
           deletePostUsecase,
           updatePostUsecase,
+          getPostsPaginatedUsecase,
         ),
       ),
 
@@ -142,11 +170,13 @@ class DependenciesInjection {
           getEventsUsecase,
           createEventUsecase,
           toggleAttendanceUsecase,
+          getEventsPaginatedUsecase,
         ),
       ),
 
       ChangeNotifierProvider(
-        create: (context) => UserProvider(updateProfileUseCase, userRepository),
+        create: (context) =>
+            UserProvider(updateProfileUseCase, userRepository),
       ),
 
       // Provide LikeUserUseCase for match functionality
