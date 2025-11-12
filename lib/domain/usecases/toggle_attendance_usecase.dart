@@ -1,4 +1,3 @@
-// lib/domain/usecases/toggle_attendance_usecase.dart
 import 'package:fox_mate_app/domain/repositories/event_repository.dart';
 
 class ToggleAttendanceUsecase {

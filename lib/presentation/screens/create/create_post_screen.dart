@@ -37,16 +37,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       _contentController.text = post.content;
       _existingImageUrl = post.imageUrl;
       
-      // Parse tags - first tag is usually the category
       if (post.tags.isNotEmpty) {
         final firstTag = post.tags[0];
         if (firstTag == 'Académico' || firstTag == 'Social') {
           _selectedCategory = firstTag;
-          // Get custom tags (excluding the category)
           final customTags = post.tags.skip(1).join(', ');
           _tagsController.text = customTags;
         } else {
-          // If no category tag, use all tags
           _tagsController.text = post.tags.join(', ');
         }
       }
@@ -125,7 +122,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       final tags = _parseTags();
 
       if (isEditMode) {
-        // Update existing post
         await postProvider.updatePost(
           postId: widget.postToEdit!.id,
           content: _contentController.text.trim(),
@@ -144,7 +140,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           Navigator.pop(context);
         }
       } else {
-        // Create new post
         final authProvider = context.read<AuthProvider>();
         
         if (authProvider.currentUser == null) {
@@ -599,8 +594,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 }
-
-// Widget para guiones
+// Borde con rayas
 class DashedBorder extends StatelessWidget {
   final Widget child;
   final Color color;

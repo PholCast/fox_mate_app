@@ -41,7 +41,6 @@ class MatchEntity {
     throw ArgumentError('Invalid value for createdAt');
   }
 
-  // Helper method to get the other user's ID
   String getOtherUserId(String currentUserId) {
     if (user1Id == currentUserId) {
       return user2Id;

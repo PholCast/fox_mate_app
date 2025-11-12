@@ -28,27 +28,21 @@ class LikeUserUseCase {
       throw ArgumentError('Cannot like yourself');
     }
 
-    // Check if already liked
     final alreadyLiked = await _matchRepository.hasUserLiked(currentUserId, likedUserId);
     if (alreadyLiked) {
-      return false; // Already liked, no action needed
+      return false;
     }
 
-    // Create the like
     await _matchRepository.likeUser(currentUserId, likedUserId);
 
-    // Check if there's a mutual like
     final isMutual = await _matchRepository.checkMutualLike(currentUserId, likedUserId);
 
     if (isMutual) {
-      // Create match
       final matchId = await _matchRepository.createMatch(currentUserId, likedUserId);
 
-      // Get sender (current user) data for notification
       final sender = await _userRepository.getUserProfile(currentUserId);
       final senderName = sender?.name ?? 'Alguien';
 
-      // Send notification to the other user
       final notification = MatchNotification(
         id: '',
         title: '¡Tú y $senderName hicieron match!',
@@ -60,7 +54,6 @@ class LikeUserUseCase {
       );
       await _notificationsRepository.createNotification(notification);
 
-      // Also send notification to current user (the one who just liked)
       final likedUser = await _userRepository.getUserProfile(likedUserId);
       final likedUserName = likedUser?.name ?? 'Alguien';
 
@@ -75,10 +68,10 @@ class LikeUserUseCase {
       );
       await _notificationsRepository.createNotification(notificationForCurrentUser);
 
-      return true; // Match created
+      return true;
     }
 
-    return false; // No match yet
+    return false;
   }
 }
 

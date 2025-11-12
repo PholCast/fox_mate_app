@@ -1,4 +1,3 @@
-// lib/domain/usecases/get_events_paginated_usecase.dart
 import 'package:fox_mate_app/domain/entities/event_entity.dart';
 import 'package:fox_mate_app/domain/repositories/event_repository.dart';
 

@@ -55,7 +55,6 @@ class _EventsScreenState extends State<EventsScreen> {
   List<EventEntity> getFilteredEvents(List<EventEntity> events) {
     List<EventEntity> filtered = events;
 
-    // Filtrar eventos que no hayan pasado
     final now = DateTime.now();
     filtered = filtered.where((event) {
       return event.eventDate.isAfter(now);
@@ -192,7 +191,6 @@ class _EventsScreenState extends State<EventsScreen> {
     final isAttending = event.isUserAttending(userId);
 
     if (isAttending) {
-      // Mostrar diálogo de confirmación para cancelar
       final shouldCancel = await showDialog<bool>(
         context: context,
         builder: (context) {
@@ -264,7 +262,6 @@ class _EventsScreenState extends State<EventsScreen> {
         }
       }
     } else {
-      // Confirmar asistencia directamente
       try {
         await eventProvider.toggleAttendance(event.id, userId);
         if (mounted) {
@@ -810,14 +807,12 @@ class _EventsScreenState extends State<EventsScreen> {
       'Domingo'
     ];
 
-    // Si es hoy
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
       return 'Hoy a las ${_formatTime(date)}';
     }
 
-    // Si es mañana
     final tomorrow = now.add(const Duration(days: 1));
     if (date.year == tomorrow.year &&
         date.month == tomorrow.month &&
@@ -825,7 +820,6 @@ class _EventsScreenState extends State<EventsScreen> {
       return 'Mañana a las ${_formatTime(date)}';
     }
 
-    // Formato completo
     final weekday = weekdays[date.weekday - 1];
     final month = months[date.month - 1];
     return '$weekday, ${date.day} de $month a las ${_formatTime(date)}';

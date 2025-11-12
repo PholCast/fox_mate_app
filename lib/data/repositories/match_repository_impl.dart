@@ -12,8 +12,7 @@ class MatchRepositoryImpl implements MatchRepository {
   @override
   Future<void> likeUser(String userId, String likedUserId) async {
     try {
-      // Create a like document
-      // Use a composite key to ensure uniqueness: userId_likedUserId
+
       final likeId = '${userId}_$likedUserId';
       await _firestore.collection(_likesCollection).doc(likeId).set({
         'userId': userId,
@@ -39,7 +38,6 @@ class MatchRepositoryImpl implements MatchRepository {
   @override
   Future<bool> checkMutualLike(String userId1, String userId2) async {
     try {
-      // Check if both users like each other
       final like1 = await hasUserLiked(userId1, userId2);
       final like2 = await hasUserLiked(userId2, userId1);
       return like1 && like2;
@@ -51,17 +49,14 @@ class MatchRepositoryImpl implements MatchRepository {
   @override
   Future<String> createMatch(String user1Id, String user2Id) async {
     try {
-      // Check if match already exists
       final exists = await matchExists(user1Id, user2Id);
       if (exists) {
-        // Get existing match ID
         final matches = await _getMatchesBetweenUsers(user1Id, user2Id);
         if (matches.isNotEmpty) {
           return matches.first.id;
         }
       }
 
-      // Create match document with sorted user IDs for consistency
       final sortedIds = [user1Id, user2Id]..sort();
       final matchData = {
         'user1Id': sortedIds[0],
@@ -89,7 +84,6 @@ class MatchRepositoryImpl implements MatchRepository {
   Future<List<MatchEntity>> _getMatchesBetweenUsers(String user1Id, String user2Id) async {
     final sortedIds = [user1Id, user2Id]..sort();
     
-    // Query for matches where user1Id and user2Id match (in either order)
     final query1 = await _firestore
         .collection(_matchesCollection)
         .where('user1Id', isEqualTo: sortedIds[0])
@@ -106,7 +100,6 @@ class MatchRepositoryImpl implements MatchRepository {
   @override
   Future<List<MatchEntity>> getUserMatches(String userId) async {
     try {
-      // Get matches where user is either user1 or user2
       final query1 = await _firestore
           .collection(_matchesCollection)
           .where('user1Id', isEqualTo: userId)

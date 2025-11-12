@@ -1,4 +1,3 @@
-// lib/data/models/post_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fox_mate_app/domain/entities/post_entity.dart';
 

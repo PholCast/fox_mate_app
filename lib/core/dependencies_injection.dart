@@ -70,9 +70,7 @@ class DependenciesInjection {
     final NotificationsRepository notificationsRepository =
         NotificationsRepositoryImpl(firestore: firebaseFirestore);
 
-    // ========================
     // UseCases - Autenticación
-    // ========================
     final SignInUsecase signInUsecase = SignInUsecase(authRepository);
     final SignUpUsecase signUpUsecase = SignUpUsecase(
       authRepository,
@@ -84,9 +82,7 @@ class DependenciesInjection {
     final UpdateProfileUseCase updateProfileUseCase =
         UpdateProfileUseCase(userRepository);
 
-    // ========================
     // UseCases - Publicaciones
-    // ========================
     final GetPostsUsecase getPostsUsecase = GetPostsUsecase(postRepository);
     final GetUserPostsUsecase getUserPostsUsecase =
         GetUserPostsUsecase(postRepository);
@@ -99,9 +95,7 @@ class DependenciesInjection {
     final GetPostsPaginatedUsecase getPostsPaginatedUsecase =
         GetPostsPaginatedUsecase(postRepository);
 
-    // ========================
     // UseCases - Eventos
-    // ========================
     final GetEventsUsecase getEventsUsecase =
         GetEventsUsecase(eventRepository);
     final CreateEventUsecase createEventUsecase =
@@ -111,18 +105,14 @@ class DependenciesInjection {
     final GetEventsPaginatedUsecase getEventsPaginatedUsecase =
         GetEventsPaginatedUsecase(eventRepository);
 
-    // ========================
     // UseCases - Match / Likes
-    // ========================
     final LikeUserUseCase likeUserUseCase = LikeUserUseCase(
       matchRepository,
       notificationsRepository,
       userRepository,
     );
 
-    // ========================
     // UseCases - Notificaciones
-    // ========================
     final GetNotificationsUseCase getNotificationsUseCase =
         GetNotificationsUseCase(notificationsRepository);
     final GetNotificationsStreamUseCase getNotificationsStreamUseCase =
@@ -133,9 +123,7 @@ class DependenciesInjection {
         getUnreadNotificationsCountStreamUseCase =
         GetUnreadNotificationsCountStreamUseCase(notificationsRepository);
 
-    // ========================
     // Providers
-    // ========================
     return [
       ChangeNotifierProvider(create: (context) => ThemeProvider()),
 
@@ -179,7 +167,6 @@ class DependenciesInjection {
             UserProvider(updateProfileUseCase, userRepository),
       ),
 
-      // Provide LikeUserUseCase for match functionality
       Provider<LikeUserUseCase>.value(value: likeUserUseCase),
 
       ChangeNotifierProvider(

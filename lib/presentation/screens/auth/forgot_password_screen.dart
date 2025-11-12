@@ -19,7 +19,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    // Reset state when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().resetPasswordResetState();
     });
@@ -78,7 +77,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Botón de regreso
                 IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
                   onPressed: () {
@@ -88,7 +86,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // Logo
                 Center(
                   child: Text(
                     'FoxMate',
@@ -102,7 +99,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // Título
                 Center(
                   child: SizedBox(
                     width: MediaQuery.of(context).size.width * 0.8,
@@ -121,7 +117,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: Spacing.space),
 
-                // Subtítulo
                 Center(
                   child: Text(
                     'Ingresa el correo electrónico asociado a tu cuenta.',
@@ -133,7 +128,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Campo de correo
                 CustomTextField(
                   controller: _emailController,
                   label: 'Correo Electrónico',
@@ -147,7 +141,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // Botón enviar enlace
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     return SizedBox(
@@ -166,7 +159,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 25),
 
-                // Mensaje de confirmación
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     if (authProvider.passwordResetEmailSent) {

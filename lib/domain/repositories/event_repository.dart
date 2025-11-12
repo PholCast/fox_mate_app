@@ -1,4 +1,3 @@
-// lib/domain/repositories/event_repository.dart
 import 'dart:io';
 import 'package:fox_mate_app/domain/entities/event_entity.dart';
 

@@ -37,7 +37,6 @@ class PostCard extends StatelessWidget {
     }
   }
 
-  /// Obtiene la imagen de perfil actualizada del usuario desde Firestore
   Future<String?> _getUserProfileImage(String userId) async {
     try {
       final doc = await FirebaseFirestore.instance
@@ -51,7 +50,6 @@ class PostCard extends StatelessWidget {
       }
       return null;
     } catch (e) {
-      // Si hay error, retornar null para usar el fallback
       return null;
     }
   }
@@ -85,11 +83,9 @@ class PostCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Avatar con FutureBuilder para cargar imagen actualizada
                 FutureBuilder<String?>(
                   future: _getUserProfileImage(post.authorId),
                   builder: (context, snapshot) {
-                    // Usar la imagen del snapshot si está disponible, sino la del post
                     final profileImage = snapshot.data ?? post.authorProfileImage;
                     
                     if (profileImage != null && profileImage.isNotEmpty) {
@@ -97,7 +93,6 @@ class PostCard extends StatelessWidget {
                         radius: 20,
                         backgroundImage: NetworkImage(profileImage),
                         onBackgroundImageError: (exception, stackTrace) {
-                          // Manejar error de carga de imagen silenciosamente
                         },
                       );
                     } else {
@@ -141,7 +136,6 @@ class PostCard extends StatelessWidget {
                 if (showMenu && onMenuPressed != null)
                   GestureDetector(
                     onTap: () {
-                      // Evitar que el tap del menú active la navegación
                       onMenuPressed!();
                     },
                     child: Container(

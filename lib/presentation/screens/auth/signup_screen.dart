@@ -82,7 +82,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  // LOGO
                   Text(
                     'FoxMate',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -93,7 +92,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   SizedBox(height: 30),
               
-                  // TÍTULO PRINCIPAL
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.8,
                     child: Text(
@@ -107,7 +105,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   SizedBox(height: Spacing.space),
               
-                  // SUBTÍTULO
                   Text(
                     '¡Únete a la comunidad de FoxMate!',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -116,7 +113,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   SizedBox(height: 40),
               
-                  // CAMPOS DE TEXTO
                   CustomTextField(
                     label: 'Nombre completo',
                     placeholder: 'Juan Pérez',
@@ -199,7 +195,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               
                   SizedBox(height: 40),
               
-                  // BOTÓN REGISTRARSE
                   Consumer<AuthProvider>(
                     builder: (context, authProvider, child) {
                       return SizedBox(
@@ -219,7 +214,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               
                   SizedBox(height: 25),
               
-                  // TEXTO INFERIOR: ¿YA TIENES UNA CUENTA?
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(

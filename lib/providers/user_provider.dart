@@ -1,4 +1,3 @@
-// lib/providers/user_provider.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/domain/entities/user_entity.dart';
@@ -27,7 +26,6 @@ class UserProvider extends ChangeNotifier {
   UserState get allUsersState => _allUsersState;
   String? get allUsersErrorMessage => _allUsersErrorMessage;
 
-  // Individual getters for all user properties
   String get userId => _user?.id ?? '';
   String get userName => _user?.name ?? '';
   String get userEmail => _user?.email ?? '';
@@ -40,7 +38,6 @@ class UserProvider extends ChangeNotifier {
 
   UserProvider(this._updateProfileUseCase, this._userRepository);
 
-  /// Load user profile from Firestore by userId
   Future<void> loadUserProfile(String userId) async {
     _setState(UserState.loading);
 
@@ -59,13 +56,11 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Load user data directly from UserEntity (from AuthProvider)
   void loadUserData(UserEntity user) {
     _user = user;
     _setState(UserState.success);
   }
 
-  /// Update user profile with new information (including optional image)
   Future<void> updateProfile({
     required String userId,
     String? name,
@@ -85,7 +80,6 @@ class UserProvider extends ChangeNotifier {
     try {
       String? newImageUrl = imageUrl;
 
-      // Upload profile image if provided
       if (profileImage != null) {
         newImageUrl = await _userRepository.uploadProfileImage(
           profileImage,
@@ -93,7 +87,6 @@ class UserProvider extends ChangeNotifier {
         );
       }
 
-      // Create updated user entity
       final updatedUser = _user!.copyWith(
         name: name ?? _user!.name,
         email: email ?? _user!.email,
@@ -105,10 +98,8 @@ class UserProvider extends ChangeNotifier {
         interests: interests ?? _user!.interests,
       );
 
-      // Update in repository
       await _userRepository.updateUserProfile(updatedUser);
 
-      // Update local state
       _user = updatedUser;
       _errorMessage = null;
       _setState(UserState.success);
@@ -119,42 +110,12 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Update only basic profile info (name and email)
-  Future<void> updateBasicProfile({
-    required UserEntity user,
-    required String newName,
-    required String newEmail,
-  }) async {
-    _setState(UserState.loading);
-    try {
-      final error = await _updateProfileUseCase.execute(
-        user: user,
-        name: newName,
-        email: newEmail,
-      );
-
-      if (error == null) {
-        _user = user.copyWith(name: newName, email: newEmail);
-        _errorMessage = null;
-        _setState(UserState.success);
-      } else {
-        _errorMessage = error;
-        _setState(UserState.error);
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
-      _setState(UserState.error);
-    }
-  }
-
-  /// Refresh user profile from Firestore
   Future<void> refreshUserProfile() async {
     if (_user != null) {
       await loadUserProfile(_user!.id);
     }
   }
 
-  /// Clear error message
   void clearError() {
     _errorMessage = null;
     if (_userState == UserState.error) {
@@ -163,7 +124,6 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load all users from Firestore (excluding current user)
   Future<void> loadAllUsers(String currentUserId) async {
     _allUsersState = UserState.loading;
     _allUsersErrorMessage = null;
@@ -171,7 +131,6 @@ class UserProvider extends ChangeNotifier {
 
     try {
       final users = await _userRepository.getAllUsers();
-      // Filter out the current user
       _allUsers = users.where((user) => user.id != currentUserId).toList();
       _allUsersState = UserState.success;
       _allUsersErrorMessage = null;
@@ -183,37 +142,12 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-
-// /// Load all users from Firestore (excluding current user and already liked users)
-// Future<void> loadUnlikedUsers(String currentUserId) async {
-//   _allUsersState = UserState.loading;
-//   _allUsersErrorMessage = null;
-//   notifyListeners();
-
-//   try {
-//     // Usar el nuevo método que filtra usuarios ya likeados
-//     _allUsers = await _userRepository.getUsersNotLikedBy(currentUserId);
-//     _allUsersState = UserState.success;
-//     _allUsersErrorMessage = null;
-//     notifyListeners();
-//   } catch (e) {
-//     _allUsersErrorMessage = 'Error al cargar usuarios: ${e.toString()}';
-//     _allUsersState = UserState.error;
-//     notifyListeners();
-//   }
-// }
-
-
-// Reemplazar el método loadAllUsers en UserProvider
-
-/// Load all users from Firestore (excluding current user and already liked users)
 Future<void> loadUnlikedUsers(String currentUserId) async {
   _allUsersState = UserState.loading;
   _allUsersErrorMessage = null;
   notifyListeners();
 
   try {
-    // Usar el nuevo método que filtra usuarios ya likeados
     _allUsers = await _userRepository.getUsersNotLikedBy(currentUserId);
     _allUsersState = UserState.success;
     _allUsersErrorMessage = null;
@@ -225,12 +159,10 @@ Future<void> loadUnlikedUsers(String currentUserId) async {
   }
 }
 
-/// Remove a specific user from the allUsers list (used after like/dislike)
 void removeUserFromList(String userId) {
   _allUsers.removeWhere((user) => user.id == userId);
   notifyListeners();
 }
-  /// Clear all user data (for logout)
   void clearUserData() {
     _user = null;
     _errorMessage = null;

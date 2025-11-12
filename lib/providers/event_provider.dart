@@ -1,4 +1,3 @@
-// lib/providers/event_provider.dart
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -75,7 +74,6 @@ class EventProvider extends ChangeNotifier {
       if (newEvents.isEmpty) {
         _hasMore = false;
       } else {
-        // Evitar duplicados
         final existingIds = _events.map((e) => e.id).toSet();
         final uniqueNewEvents = newEvents.where((e) => !existingIds.contains(e.id)).toList();
         
@@ -133,7 +131,6 @@ class EventProvider extends ChangeNotifier {
   Future<void> toggleAttendance(String eventId, String userId) async {
     try {
       await _toggleAttendanceUsecase.execute(eventId, userId);
-      // El stream actualizará automáticamente la UI
     } catch (e) {
       _errorMessage = e.toString();
       notifyListeners();

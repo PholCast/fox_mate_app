@@ -12,20 +12,15 @@ class SendMatchNotificationUseCase {
   );
 
   Future<void> execute({
-    required String senderId,   // User who triggered the match (current user)
-    required String receiverId, // User who should receive the notification
-    required String matchId,    // The match document ID (optional but useful)
+    required String senderId,   
+    required String receiverId,
+    required String matchId,
   }) async {
     if (senderId.isEmpty) throw ArgumentError('Sender ID is empty');
     if (receiverId.isEmpty) throw ArgumentError('Receiver ID is empty');
 
-    // Get sender data (for name)
-    // final sender = await _userRepository.getUserById(senderId);
+    final title = '¡Tú y sender.name hicieron match! ';
 
-    // Build the notification title
-    final title = '¡Tú y sender.name hicieron match! '; //we use sender name here
-
-    // Create a new MatchNotification object
     final notification = MatchNotification(
       id: '',
       title: title,
@@ -36,7 +31,6 @@ class SendMatchNotificationUseCase {
       createdAt: DateTime.now(),
     );
 
-    // Send (save) the notification
     await _notificationsRepository.createNotification(notification);
   }
 }

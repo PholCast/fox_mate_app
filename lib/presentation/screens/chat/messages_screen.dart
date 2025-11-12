@@ -21,7 +21,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
   void initState() {
     super.initState();
     messages = List.from(widget.chat.messages);
-    // Scroll al final después de que se construya el widget
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
@@ -60,7 +59,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
       _messageController.clear();
     });
 
-    // Scroll al final después de enviar
     Future.delayed(Duration(milliseconds: 100), () {
       _scrollToBottom();
     });
@@ -109,7 +107,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
       ),
       body: Column(
         children: [
-          // Mensajes
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -125,7 +122,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
             ),
           ),
 
-          // Input de mensaje
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: Spacing.padding,

@@ -1,4 +1,3 @@
-// lib/domain/usecases/delete_post_usecase.dart
 import 'package:fox_mate_app/domain/repositories/post_repository.dart';
 
 class DeletePostUsecase {

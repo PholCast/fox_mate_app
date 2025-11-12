@@ -1,4 +1,3 @@
-// lib/domain/entities/event_entity.dart
 import 'package:equatable/equatable.dart';
 
 class EventEntity extends Equatable {
@@ -12,7 +11,7 @@ class EventEntity extends Equatable {
   final String? imageUrl;
   final String? location;
   final String category;
-  final List<String> attendees; // Lista de IDs de usuarios confirmados
+  final List<String> attendees;
   final int attendeesCount;
 
   const EventEntity({

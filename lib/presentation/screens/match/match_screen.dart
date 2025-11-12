@@ -24,7 +24,7 @@ class _MatchScreenState extends State<MatchScreen>
   String? selectedSemester;
   String? selectedInterest;
 
-  // Variables para el swipe
+  // Variables para el arrastrar la tarjeta
   Offset dragPosition = Offset.zero;
   bool isDragging = false;
   AnimationController? _swipeAnimationController;
@@ -68,8 +68,7 @@ Future<void> _handleRefresh() async {
     if (mounted) {
       setState(() {
         filteredUsers = List.from(userProvider.allUsers);
-        currentIndex = 0; // Reset to first user
-        // Clear filters
+        currentIndex = 0;
         selectedCareer = null;
         selectedSemester = null;
         selectedInterest = null;
@@ -343,7 +342,6 @@ Future<void> _handleSwipe(bool isLike) async {
   }
 
   if (isLike) {
-    // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -357,16 +355,13 @@ Future<void> _handleSwipe(bool isLike) async {
         likedUserId: currentUser.id,
       );
 
-      // Close loading indicator
       if (mounted) {
         Navigator.pop(context);
       }
 
-      // Remove the liked user from both lists
       setState(() {
         filteredUsers.removeAt(currentIndex);
         
-        // Keep the same index or reset to 0 if we're at the end
         if (currentIndex >= filteredUsers.length && filteredUsers.isNotEmpty) {
           currentIndex = 0;
         }
@@ -374,15 +369,12 @@ Future<void> _handleSwipe(bool isLike) async {
         isDragging = false;
       });
       
-      // Remove from provider's list (this will trigger notifyListeners)
       final userProvider = context.read<UserProvider>();
       userProvider.removeUserFromList(currentUser.id);
 
-      // Show match dialog only if there's a mutual match
       if (isMatch && mounted) {
         _showMatchDialog(currentUser);
       } else if (mounted) {
-        // Show a simple like confirmation
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Le diste like a ${currentUser.name}'),
@@ -392,12 +384,10 @@ Future<void> _handleSwipe(bool isLike) async {
         );
       }
     } catch (e) {
-      // Close loading indicator
       if (mounted) {
         Navigator.pop(context);
       }
 
-      // Still remove the user from both lists even on error
       setState(() {
         filteredUsers.removeAt(currentIndex);
         
@@ -408,7 +398,6 @@ Future<void> _handleSwipe(bool isLike) async {
         isDragging = false;
       });
       
-      // Remove from provider's list (this will trigger notifyListeners)
       final userProvider = context.read<UserProvider>();
       userProvider.removeUserFromList(currentUser.id);
 
@@ -422,7 +411,6 @@ Future<void> _handleSwipe(bool isLike) async {
       }
     }
   } else {
-    // For dislike, also remove from both lists
     setState(() {
       filteredUsers.removeAt(currentIndex);
       
@@ -433,7 +421,6 @@ Future<void> _handleSwipe(bool isLike) async {
       isDragging = false;
     });
     
-    // Remove from provider's list (this will trigger notifyListeners)
     final userProvider = context.read<UserProvider>();
     userProvider.removeUserFromList(currentUser.id);
   }
@@ -475,7 +462,6 @@ Future<void> _handleSwipe(bool isLike) async {
                   ),
                   SizedBox(height: 30),
 
-                  // Avatar con corazón
                   Stack(
                     alignment: Alignment.center,
                     children: [
@@ -524,7 +510,6 @@ Future<void> _handleSwipe(bool isLike) async {
 
                   SizedBox(height: 30),
 
-                  // Botón Enviar mensaje
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -569,13 +554,11 @@ Widget build(BuildContext context) {
           filteredUsers.isNotEmpty && currentIndex < filteredUsers.length;
       final currentUser = hasUsers ? filteredUsers[currentIndex] : null;
 
-      // Apply filters when allUsers is loaded and no filters are applied yet
       if (allUsers.isNotEmpty &&
           filteredUsers.isEmpty &&
           selectedCareer == null &&
           selectedSemester == null &&
           selectedInterest == null) {
-        // Use a post-frame callback to avoid setState during build
         Future.microtask(() {
           if (mounted) {
             applyFilters(allUsers);
@@ -662,7 +645,6 @@ Widget build(BuildContext context) {
                       ],
                     ),
                   ),
-                  // AQUÍ ESTÁ EL CAMBIO PRINCIPAL - RefreshIndicator envuelve todo
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: _handleRefresh,
@@ -744,16 +726,12 @@ Widget build(BuildContext context) {
       },
       onPanEnd: (details) {
         if (dragPosition.dx.abs() > threshold) {
-          // Swipe significativo
           if (dragPosition.dx > 0) {
-            // Swipe a la derecha (like)
             _handleSwipe(true);
           } else {
-            // Swipe a la izquierda (dislike)
             _handleSwipe(false);
           }
         } else {
-          // Volver a la posición original
           setState(() {
             dragPosition = Offset.zero;
             isDragging = false;

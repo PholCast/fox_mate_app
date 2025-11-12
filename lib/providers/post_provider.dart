@@ -1,4 +1,3 @@
-// lib/providers/post_provider.dart
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -46,7 +45,6 @@ class PostProvider extends ChangeNotifier {
   bool _hasMore = true;
   bool _isLoadingMore = false;
 
-  // New variables for user posts pagination
   bool _hasMoreUserPosts = true;
   bool _isLoadingMoreUserPosts = false;
   String? _currentUserId;
@@ -62,7 +60,6 @@ class PostProvider extends ChangeNotifier {
   bool get hasMore => _hasMore;
   bool get isLoadingMore => _isLoadingMore;
 
-  // New getters for user posts pagination
   bool get hasMoreUserPosts => _hasMoreUserPosts;
   bool get isLoadingMoreUserPosts => _isLoadingMoreUserPosts;
 
@@ -86,7 +83,6 @@ class PostProvider extends ChangeNotifier {
     );
   }
 
-  /// Load posts from a specific user (stream-based, not paginated)
   void loadUserPosts(String userId) {
     _userPostsSubscription?.cancel();
 
@@ -109,7 +105,6 @@ class PostProvider extends ChangeNotifier {
     );
   }
 
-  /// Load user posts with pagination (initial load)
   Future<void> loadUserPostsPaginated(String userId) async {
     try {
       _currentUserId = userId;
@@ -119,13 +114,11 @@ class PostProvider extends ChangeNotifier {
       _userPostsErrorMessage = null;
       notifyListeners();
 
-      // Create a filter function to get only user posts
       final allPosts = await _getPostsPaginatedUsecase.execute(
         limit: 10,
         lastPost: null,
       );
 
-      // Filter posts by userId
       _userPosts = allPosts.where((post) => post.authorId == userId).toList();
       _hasMoreUserPosts = _userPosts.length >= 10;
       _userPostsStatus = PostStatus.success;
@@ -138,7 +131,6 @@ class PostProvider extends ChangeNotifier {
     }
   }
 
-  /// Load more user posts (pagination)
   Future<void> loadMoreUserPosts() async {
     if (_isLoadingMoreUserPosts || !_hasMoreUserPosts || _userPosts.isEmpty || _currentUserId == null) {
       return;
@@ -150,19 +142,16 @@ class PostProvider extends ChangeNotifier {
 
       final lastPost = _userPosts.last;
       
-      // Get more posts
       final newPosts = await _getPostsPaginatedUsecase.execute(
-        limit: 30, // Get more to filter
+        limit: 30,
         lastPost: lastPost,
       );
 
-      // Filter by current user
       final userNewPosts = newPosts.where((post) => post.authorId == _currentUserId).toList();
 
       if (userNewPosts.isEmpty) {
         _hasMoreUserPosts = false;
       } else {
-        // Avoid duplicates
         final existingIds = _userPosts.map((p) => p.id).toSet();
         final uniqueNewPosts = userNewPosts.where((p) => !existingIds.contains(p.id)).toList();
 
@@ -177,7 +166,6 @@ class PostProvider extends ChangeNotifier {
     }
   }
 
-  /// Clear user posts (useful for logout or changing users)
   void clearUserPosts() {
     _userPostsSubscription?.cancel();
     _userPosts = [];
@@ -189,7 +177,6 @@ class PostProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 🔄 Load more posts (pagination for main feed)
   Future<void> loadMorePosts() async {
     if (_isLoadingMore || !_hasMore || _posts.isEmpty) return;
 
@@ -207,7 +194,6 @@ class PostProvider extends ChangeNotifier {
       if (newPosts.isEmpty) {
         _hasMore = false;
       } else {
-        // Avoid duplicates
         final existingIds = _posts.map((p) => p.id).toSet();
         final uniqueNewPosts =
             newPosts.where((p) => !existingIds.contains(p.id)).toList();
@@ -264,7 +250,6 @@ class PostProvider extends ChangeNotifier {
   Future<void> deletePost(String postId) async {
     try {
       await _deletePostUsecase.execute(postId);
-      // Remove from user posts list if it exists
       _userPosts.removeWhere((post) => post.id == postId);
       notifyListeners();
     } catch (e) {

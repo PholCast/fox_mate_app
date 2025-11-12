@@ -1,4 +1,3 @@
-// lib/data/repositories/post_repository_impl.dart
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -33,12 +32,10 @@ class PostRepositoryImpl implements PostRepository {
         .where('authorId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) {
-      // Ordenar en memoria después de obtener los datos
       final posts = snapshot.docs.map((doc) {
         return PostModel.fromJson(doc.data(), doc.id);
       }).toList();
       
-      // Ordenar por timestamp descendente
       posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       
       return posts;
@@ -83,14 +80,12 @@ class PostRepositoryImpl implements PostRepository {
     try {
       String? imageUrl;
 
-      // Si hay imagen, subirla a Firebase Storage
       if (image != null) {
         imageUrl = await _uploadImage(image, authorId);
       }
 
-      // Crear el post en Firestore
       final postData = PostModel(
-        id: '', // Firestore generará el ID
+        id: '',
         authorId: authorId,
         authorName: authorName,
         authorInitials: authorInitials,
@@ -110,14 +105,12 @@ class PostRepositoryImpl implements PostRepository {
   @override
   Future<void> deletePost(String postId) async {
     try {
-      // Obtener el post para eliminar la imagen si existe
       final doc = await _firestore.collection('posts').doc(postId).get();
       
       if (doc.exists) {
         final data = doc.data();
         final imageUrl = data?['imageUrl'] as String?;
         
-        // Eliminar imagen de Storage si existe
         if (imageUrl != null) {
           try {
             final ref = FirebaseStorage.instance.refFromURL(imageUrl);
@@ -127,7 +120,6 @@ class PostRepositoryImpl implements PostRepository {
           }
         }
         
-        // Eliminar el documento
         await _firestore.collection('posts').doc(postId).delete();
       }
     } catch (e) {
@@ -144,7 +136,6 @@ class PostRepositoryImpl implements PostRepository {
     bool removeImage = false,
   }) async {
     try {
-      // Obtener el post actual
       final doc = await _firestore.collection('posts').doc(postId).get();
       
       if (!doc.exists) {
@@ -154,7 +145,6 @@ class PostRepositoryImpl implements PostRepository {
       final currentData = doc.data()!;
       String? imageUrl = currentData['imageUrl'] as String?;
 
-      // Si se debe eliminar la imagen
       if (removeImage && imageUrl != null) {
         try {
           final ref = FirebaseStorage.instance.refFromURL(imageUrl);
@@ -165,9 +155,7 @@ class PostRepositoryImpl implements PostRepository {
         imageUrl = null;
       }
 
-      // Si hay una nueva imagen, subirla
       if (image != null) {
-        // Eliminar imagen anterior si existe
         if (imageUrl != null) {
           try {
             final oldRef = FirebaseStorage.instance.refFromURL(imageUrl);
@@ -179,7 +167,6 @@ class PostRepositoryImpl implements PostRepository {
         imageUrl = await _uploadImage(image, currentData['authorId'] as String);
       }
 
-      // Actualizar el post en Firestore
       await _firestore.collection('posts').doc(postId).update({
         'content': content,
         'tags': tags,

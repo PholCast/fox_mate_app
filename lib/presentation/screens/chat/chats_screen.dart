@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/constants/spacing.dart';
-import 'package:fox_mate_app/data/models/chat_model.dart';
 import 'package:fox_mate_app/domain/entities/match_notification.dart';
-import 'package:fox_mate_app/presentation/screens/chat/messages_screen.dart';
 import 'package:fox_mate_app/providers/auth_provider.dart';
 import 'package:fox_mate_app/providers/notifications_provider.dart';
 import 'package:provider/provider.dart';
@@ -109,16 +107,13 @@ class _ChatsScreenState extends State<ChatsScreen> {
           ),
           body: Column(
             children: [
-              // Divisor
               Divider(height: 1, color: Colors.grey[200]),
 
-              // Lista de chats y notificaciones
               Expanded(
                 child: ListView(
                   controller: _scrollController,
                   padding: EdgeInsets.zero,
                   children: [
-                    // Chats section
                     if (notifications.isEmpty)
                       Center(
                         child: Padding(
@@ -130,7 +125,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
                         ),
                       ),
 
-                    // Notifications section
                     if (notifications.isNotEmpty) ...[
                       Padding(
                         padding: EdgeInsets.symmetric(
@@ -159,7 +153,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
   ) {
     return InkWell(
       onTap: () {
-        // Mark as read when tapped
         if (!notification.isRead) {
           notificationsProvider.markNotificationsAsRead(notification.id);
         }
@@ -174,7 +167,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
         ),
         child: Row(
           children: [
-            // Notification icon
             Container(
               width: 56,
               height: 56,

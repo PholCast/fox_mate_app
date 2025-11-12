@@ -18,7 +18,6 @@ class PostDetailScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-          // AppBar con imagen de fondo
           SliverAppBar(
             expandedHeight: post.imageUrl != null ? 400 : 0,
             pinned: true,
@@ -76,7 +75,6 @@ class PostDetailScreen extends StatelessWidget {
                             );
                           },
                         ),
-                        // Gradiente para mejorar la legibilidad
                         Positioned(
                           bottom: 0,
                           left: 0,
@@ -101,14 +99,12 @@ class PostDetailScreen extends StatelessWidget {
                 : null,
           ),
 
-          // Contenido del post
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(Spacing.padding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Información del autor
                   Row(
                     children: [
                       if (post.authorProfileImage != null &&
@@ -157,7 +153,6 @@ class PostDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Contenido del post
                   Text(
                     post.content,
                     style: const TextStyle(
@@ -168,7 +163,6 @@ class PostDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Tags
                   if (post.tags.isNotEmpty) ...[
                     const Text(
                       'Etiquetas',

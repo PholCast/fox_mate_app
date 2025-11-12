@@ -66,7 +66,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
             prefixIcon: widget.prefixIcon != null
                     ? Padding(
-                        padding: const EdgeInsets.only(top: 18,bottom: 18,left:15), // 👈 Ajusta aquí el espacio interno del ícono
+                        padding: const EdgeInsets.only(top: 18,bottom: 18,left:15),
                         child: widget.prefixIcon,
                       )
                     : null,

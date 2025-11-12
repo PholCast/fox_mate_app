@@ -142,7 +142,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Resets the forgot password state
   void resetPasswordResetState() {
     _isSendingPasswordReset = false;
     _passwordResetEmailSent = false;

@@ -1,4 +1,3 @@
-// lib/domain/entities/post_entity.dart
 import 'package:equatable/equatable.dart';
 
 class PostEntity extends Equatable {

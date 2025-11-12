@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text('FoxMate', style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontSize: 60,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -3, // más compacta
+                  letterSpacing: -3,
                 )),
                 SizedBox(height: 30),
             

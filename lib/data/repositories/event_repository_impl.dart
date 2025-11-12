@@ -1,4 +1,3 @@
-// lib/data/repositories/event_repository_impl.dart
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -65,12 +64,10 @@ class EventRepositoryImpl implements EventRepository {
     try {
       String? imageUrl;
 
-      // Si hay imagen, subirla a Firebase Storage
       if (image != null) {
         imageUrl = await _uploadImage(image, creatorId);
       }
 
-      // Crear el evento en Firestore
       final eventData = EventModel(
         id: '',
         creatorId: creatorId,
@@ -108,10 +105,8 @@ class EventRepositoryImpl implements EventRepository {
         final attendees = List<String>.from(data['attendees'] ?? []);
         
         if (attendees.contains(userId)) {
-          // Remover asistencia
           attendees.remove(userId);
         } else {
-          // Agregar asistencia
           attendees.add(userId);
         }
 
@@ -134,7 +129,6 @@ class EventRepositoryImpl implements EventRepository {
         final data = doc.data();
         final imageUrl = data?['imageUrl'] as String?;
         
-        // Eliminar imagen de Storage si existe
         if (imageUrl != null) {
           try {
             final ref = FirebaseStorage.instance.refFromURL(imageUrl);
@@ -144,7 +138,6 @@ class EventRepositoryImpl implements EventRepository {
           }
         }
         
-        // Eliminar el documento
         await _firestore.collection('events').doc(eventId).delete();
       }
     } catch (e) {

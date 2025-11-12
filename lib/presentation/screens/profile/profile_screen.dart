@@ -30,7 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _loadUserData();
     });
 
-    // Listener para detectar cuando se llegue al final del scroll
     _scrollController.addListener(_onScroll);
   }
 
@@ -44,7 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      // Cargar más cuando esté a 200px del final
       _loadMoreUserPosts();
     }
   }
@@ -63,13 +61,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = authProvider.currentUser;
 
     if (user != null) {
-      // Load user data into UserProvider
       userProvider.loadUserData(user);
 
-      // Load full profile from Firestore
       userProvider.loadUserProfile(user.id);
 
-      // Load user posts with pagination
       postProvider.loadUserPostsPaginated(user.id);
     }
   }
@@ -113,12 +108,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final postProvider = context.read<PostProvider>();
       final notificationsProvider = context.read<NotificationsProvider>();
 
-      // Clear user data
       userProvider.clearUserData();
       postProvider.clearUserPosts();
       notificationsProvider.reset();
 
-      // Sign out
       await authProvider.signOut();
 
     }
@@ -151,7 +144,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       builder: (context) => CreatePostScreen(postToEdit: post),
                     ),
                   ).then((_) {
-                    // Refresh user posts after editing
                     if (mounted) {
                       final user = userProvider.user ?? authProvider.currentUser;
                       if (user != null) {
@@ -272,16 +264,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: Consumer3<AuthProvider, UserProvider, PostProvider>(
         builder: (context, authProvider, userProvider, postProvider, child) {
-          // Show loading indicator while loading
           if (userProvider.userState == UserState.loading &&
               userProvider.user == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Get user from UserProvider, fallback to AuthProvider
           final user = userProvider.user ?? authProvider.currentUser;
 
-          // If no user data available
           if (user == null) {
             return Center(
               child: Column(
@@ -310,7 +299,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           }
 
-          // Show profile with user data
           return RefreshIndicator(
             onRefresh: () async {
               await userProvider.loadUserProfile(user.id);
@@ -324,7 +312,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const SizedBox(height: 20),
 
-                  // Avatar con botón de cámara
                   Stack(
                     children: [
                       CircleAvatar(
@@ -358,7 +345,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Nombre
                   Text(
                     user.name,
                     style: const TextStyle(
@@ -369,7 +355,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 4),
 
-                  // Carrera y semestre
                   Text(
                     '${user.career} | ${user.semester}° Semestre',
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
@@ -377,7 +362,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 8),
 
-                  // Email
                   Text(
                     user.email,
                     style: TextStyle(fontSize: 13, color: Colors.grey[500]),
@@ -385,7 +369,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Botón Editar Perfil
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: Spacing.padding),
                     child: SizedBox(
@@ -399,7 +382,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           );
 
-                          // Refresh user data after editing
                           if (result != null && mounted) {
                             await userProvider.loadUserProfile(user.id);
                           }
@@ -426,7 +408,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Sobre mí
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: Spacing.padding),
                     child: Column(
@@ -463,7 +444,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Intereses
                   if (user.interests.isNotEmpty)
                     Container(
                       width: double.infinity,
@@ -511,7 +491,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Mis Publicaciones
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: Spacing.padding),
                     child: Column(
@@ -552,7 +531,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Loading state for posts
                         if (postProvider.userPostsStatus == PostStatus.loading)
                           const Center(
                             child: Padding(
@@ -560,7 +538,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: CircularProgressIndicator(),
                             ),
                           )
-                        // Error state for posts
                         else if (postProvider.userPostsStatus ==
                             PostStatus.error)
                           Center(
@@ -594,7 +571,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           )
-                        // Empty state
                         else if (postProvider.userPosts.isEmpty)
                           Center(
                             child: Padding(
@@ -618,7 +594,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           )
-                        // Display posts
                         else
                           Column(
                             children: [
@@ -642,7 +617,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                               ),
                               
-                              // Loading indicator for pagination
                               if (postProvider.isLoadingMoreUserPosts)
                                 const Padding(
                                   padding: EdgeInsets.all(16.0),
@@ -651,7 +625,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                               
-                              // End message
                               if (!postProvider.hasMoreUserPosts && postProvider.userPosts.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.all(16.0),

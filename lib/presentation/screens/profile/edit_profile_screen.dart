@@ -94,7 +94,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    // Validate fields
     if (nameController.text.trim().isEmpty) {
       _showErrorSnackBar('El nombre es requerido');
       return;
@@ -123,7 +122,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final userProvider = context.read<UserProvider>();
 
-      // Update profile in provider (now with image support)
       await userProvider.updateProfile(
         userId: widget.user.id,
         name: nameController.text.trim(),
@@ -138,7 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         if (userProvider.userState == UserState.success) {
           _showSuccessSnackBar('Perfil actualizado correctamente');
-          // Return true to indicate success
+
           Navigator.pop(context, true);
         } else if (userProvider.errorMessage != null) {
           _showErrorSnackBar(userProvider.errorMessage!);
@@ -212,7 +210,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar con botón de cambiar imagen
             Center(
               child: GestureDetector(
                 onTap: _pickImage,
@@ -291,7 +288,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             const SizedBox(height: 32),
 
-            // Nombre y Apellidos
             const Text(
               'Nombre y Apellidos',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
@@ -356,7 +352,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             const SizedBox(height: 20),
 
-            // Carrera
             const Text(
               'Carrera',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
@@ -388,7 +383,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             const SizedBox(height: 20),
 
-            // Semestre actual que cursa el estudiante
             const Text(
               'Semestre que cursa',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
@@ -421,7 +415,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             const SizedBox(height: 20),
 
-            // Sobre mí
             const Text(
               'Sobre mí',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
@@ -451,7 +444,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             const SizedBox(height: 20),
 
-            // Intereses
             const Text(
               'Intereses',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
@@ -495,7 +487,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   );
                 }).toList(),
 
-                // Botón Añadir
                 GestureDetector(
                   onTap: () {
                     _showAddInterestDialog();
@@ -529,7 +520,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             const SizedBox(height: 40),
 
-            // Botón Guardar cambios
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
