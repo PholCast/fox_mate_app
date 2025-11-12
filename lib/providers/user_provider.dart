@@ -183,6 +183,53 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+
+// /// Load all users from Firestore (excluding current user and already liked users)
+// Future<void> loadUnlikedUsers(String currentUserId) async {
+//   _allUsersState = UserState.loading;
+//   _allUsersErrorMessage = null;
+//   notifyListeners();
+
+//   try {
+//     // Usar el nuevo método que filtra usuarios ya likeados
+//     _allUsers = await _userRepository.getUsersNotLikedBy(currentUserId);
+//     _allUsersState = UserState.success;
+//     _allUsersErrorMessage = null;
+//     notifyListeners();
+//   } catch (e) {
+//     _allUsersErrorMessage = 'Error al cargar usuarios: ${e.toString()}';
+//     _allUsersState = UserState.error;
+//     notifyListeners();
+//   }
+// }
+
+
+// Reemplazar el método loadAllUsers en UserProvider
+
+/// Load all users from Firestore (excluding current user and already liked users)
+Future<void> loadUnlikedUsers(String currentUserId) async {
+  _allUsersState = UserState.loading;
+  _allUsersErrorMessage = null;
+  notifyListeners();
+
+  try {
+    // Usar el nuevo método que filtra usuarios ya likeados
+    _allUsers = await _userRepository.getUsersNotLikedBy(currentUserId);
+    _allUsersState = UserState.success;
+    _allUsersErrorMessage = null;
+    notifyListeners();
+  } catch (e) {
+    _allUsersErrorMessage = 'Error al cargar usuarios: ${e.toString()}';
+    _allUsersState = UserState.error;
+    notifyListeners();
+  }
+}
+
+/// Remove a specific user from the allUsers list (used after like/dislike)
+void removeUserFromList(String userId) {
+  _allUsers.removeWhere((user) => user.id == userId);
+  notifyListeners();
+}
   /// Clear all user data (for logout)
   void clearUserData() {
     _user = null;

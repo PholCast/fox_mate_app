@@ -36,7 +36,7 @@ class _MatchScreenState extends State<MatchScreen>
       duration: Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUsers();
     });
@@ -46,9 +46,9 @@ class _MatchScreenState extends State<MatchScreen>
     final authProvider = context.read<AuthProvider>();
     final userProvider = context.read<UserProvider>();
     final currentUser = authProvider.currentUser;
-    
+
     if (currentUser != null) {
-      userProvider.loadAllUsers(currentUser.id).then((_) {
+      userProvider.loadUnlikedUsers(currentUser.id).then((_) {
         if (mounted) {
           setState(() {
             filteredUsers = List.from(userProvider.allUsers);
@@ -65,7 +65,10 @@ class _MatchScreenState extends State<MatchScreen>
   }
 
   Set<String> getAllCareers(List<UserEntity> users) {
-    return users.map((user) => user.career).where((career) => career.isNotEmpty).toSet();
+    return users
+        .map((user) => user.career)
+        .where((career) => career.isNotEmpty)
+        .toSet();
   }
 
   Set<String> getAllSemesters(List<UserEntity> users) {
@@ -86,7 +89,8 @@ class _MatchScreenState extends State<MatchScreen>
         bool matchesCareer =
             selectedCareer == null || user.career == selectedCareer;
         bool matchesSemester =
-            selectedSemester == null || user.semester.toString() == selectedSemester;
+            selectedSemester == null ||
+            user.semester.toString() == selectedSemester;
         bool matchesInterest =
             selectedInterest == null ||
             user.interests.contains(selectedInterest);
@@ -302,106 +306,221 @@ class _MatchScreenState extends State<MatchScreen>
     );
   }
 
-  Future<void> _handleSwipe(bool isLike) async {
-    if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
+  // Future<void> _handleSwipe(bool isLike) async {
+  //   if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
 
-    final currentUser = filteredUsers[currentIndex];
-    final authProvider = context.read<AuthProvider>();
-    final currentUserId = authProvider.currentUser?.id;
+  //   final currentUser = filteredUsers[currentIndex];
+  //   final authProvider = context.read<AuthProvider>();
+  //   final currentUserId = authProvider.currentUser?.id;
 
-    if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Usuario no autenticado'),
-          backgroundColor: Colors.red,
-        ),
+  //   if (currentUserId == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Error: Usuario no autenticado'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   if (isLike) {
+  //     // Show loading indicator
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (context) => const Center(child: CircularProgressIndicator()),
+  //     );
+
+  //     try {
+  //       final likeUserUseCase = context.read<LikeUserUseCase>();
+  //       final isMatch = await likeUserUseCase.execute(
+  //         currentUserId: currentUserId,
+  //         likedUserId: currentUser.id,
+  //       );
+
+  //       // Close loading indicator
+  //       if (mounted) {
+  //         Navigator.pop(context);
+  //       }
+
+  //       // Move to next user
+  //       setState(() {
+  //         if (currentIndex < filteredUsers.length - 1) {
+  //           currentIndex++;
+  //         } else {
+  //           currentIndex = 0;
+  //         }
+  //         dragPosition = Offset.zero;
+  //         isDragging = false;
+  //       });
+
+  //       // Show match dialog only if there's a mutual match
+  //       if (isMatch && mounted) {
+  //         _showMatchDialog(currentUser);
+  //       } else if (mounted) {
+  //         // Show a simple like confirmation
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text('Le diste like a ${currentUser.name}'),
+  //             backgroundColor: Colors.green,
+  //             duration: const Duration(seconds: 2),
+  //           ),
+  //         );
+  //       }
+  //     } catch (e) {
+  //       // Close loading indicator
+  //       if (mounted) {
+  //         Navigator.pop(context);
+  //       }
+
+  //       // Move to next user even on error
+  //       setState(() {
+  //         if (currentIndex < filteredUsers.length - 1) {
+  //           currentIndex++;
+  //         } else {
+  //           currentIndex = 0;
+  //         }
+  //         dragPosition = Offset.zero;
+  //         isDragging = false;
+  //       });
+
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text('Error: ${e.toString()}'),
+  //             backgroundColor: Colors.red,
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } else {
+  //     // Just move to next user for dislike
+  //     setState(() {
+  //       if (currentIndex < filteredUsers.length - 1) {
+  //         currentIndex++;
+  //       } else {
+  //         currentIndex = 0;
+  //       }
+  //       dragPosition = Offset.zero;
+  //       isDragging = false;
+  //     });
+  //   }
+  // }
+
+Future<void> _handleSwipe(bool isLike) async {
+  if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
+
+  final currentUser = filteredUsers[currentIndex];
+  final authProvider = context.read<AuthProvider>();
+  final currentUserId = authProvider.currentUser?.id;
+
+  if (currentUserId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error: Usuario no autenticado'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  if (isLike) {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final likeUserUseCase = context.read<LikeUserUseCase>();
+      final isMatch = await likeUserUseCase.execute(
+        currentUserId: currentUserId,
+        likedUserId: currentUser.id,
       );
-      return;
-    }
 
-    if (isLike) {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-
-      try {
-        final likeUserUseCase = context.read<LikeUserUseCase>();
-        final isMatch = await likeUserUseCase.execute(
-          currentUserId: currentUserId,
-          likedUserId: currentUser.id,
-        );
-
-        // Close loading indicator
-        if (mounted) {
-          Navigator.pop(context);
-        }
-
-        // Move to next user
-        setState(() {
-          if (currentIndex < filteredUsers.length - 1) {
-            currentIndex++;
-          } else {
-            currentIndex = 0;
-          }
-          dragPosition = Offset.zero;
-          isDragging = false;
-        });
-
-        // Show match dialog only if there's a mutual match
-        if (isMatch && mounted) {
-          _showMatchDialog(currentUser);
-        } else if (mounted) {
-          // Show a simple like confirmation
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Le diste like a ${currentUser.name}'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      } catch (e) {
-        // Close loading indicator
-        if (mounted) {
-          Navigator.pop(context);
-        }
-
-        // Move to next user even on error
-        setState(() {
-          if (currentIndex < filteredUsers.length - 1) {
-            currentIndex++;
-          } else {
-            currentIndex = 0;
-          }
-          dragPosition = Offset.zero;
-          isDragging = false;
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      // Close loading indicator
+      if (mounted) {
+        Navigator.pop(context);
       }
-    } else {
-      // Just move to next user for dislike
+
+      // Remove the liked user from both lists
       setState(() {
-        if (currentIndex < filteredUsers.length - 1) {
-          currentIndex++;
-        } else {
+        filteredUsers.removeAt(currentIndex);
+        
+        // Keep the same index or reset to 0 if we're at the end
+        if (currentIndex >= filteredUsers.length && filteredUsers.isNotEmpty) {
           currentIndex = 0;
         }
         dragPosition = Offset.zero;
         isDragging = false;
       });
+      
+      // Remove from provider's list (this will trigger notifyListeners)
+      final userProvider = context.read<UserProvider>();
+      userProvider.removeUserFromList(currentUser.id);
+
+      // Show match dialog only if there's a mutual match
+      if (isMatch && mounted) {
+        _showMatchDialog(currentUser);
+      } else if (mounted) {
+        // Show a simple like confirmation
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Le diste like a ${currentUser.name}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading indicator
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Still remove the user from both lists even on error
+      setState(() {
+        filteredUsers.removeAt(currentIndex);
+        
+        if (currentIndex >= filteredUsers.length && filteredUsers.isNotEmpty) {
+          currentIndex = 0;
+        }
+        dragPosition = Offset.zero;
+        isDragging = false;
+      });
+      
+      // Remove from provider's list (this will trigger notifyListeners)
+      final userProvider = context.read<UserProvider>();
+      userProvider.removeUserFromList(currentUser.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
+  } else {
+    // For dislike, also remove from both lists
+    setState(() {
+      filteredUsers.removeAt(currentIndex);
+      
+      if (currentIndex >= filteredUsers.length && filteredUsers.isNotEmpty) {
+        currentIndex = 0;
+      }
+      dragPosition = Offset.zero;
+      isDragging = false;
+    });
+    
+    // Remove from provider's list (this will trigger notifyListeners)
+    final userProvider = context.read<UserProvider>();
+    userProvider.removeUserFromList(currentUser.id);
   }
+}
+
 
   void _showMatchDialog(UserEntity matchedUser) {
     showDialog(
@@ -492,7 +611,6 @@ class _MatchScreenState extends State<MatchScreen>
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        // Aquí iría la navegación al chat
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: CustomColors.primaryColor,
@@ -504,7 +622,7 @@ class _MatchScreenState extends State<MatchScreen>
                         elevation: 0,
                       ),
                       child: Text(
-                        'Enviar mensaje',
+                        'Aceptar',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -514,32 +632,6 @@ class _MatchScreenState extends State<MatchScreen>
                   ),
 
                   SizedBox(height: 12),
-
-                  // Botón Seguir buscando
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        foregroundColor: Colors.black87,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Seguir buscando',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -559,10 +651,10 @@ class _MatchScreenState extends State<MatchScreen>
         final currentUser = hasUsers ? filteredUsers[currentIndex] : null;
 
         // Apply filters when allUsers is loaded and no filters are applied yet
-        if (allUsers.isNotEmpty && 
-            filteredUsers.isEmpty && 
-            selectedCareer == null && 
-            selectedSemester == null && 
+        if (allUsers.isNotEmpty &&
+            filteredUsers.isEmpty &&
+            selectedCareer == null &&
+            selectedSemester == null &&
             selectedInterest == null) {
           // Use a post-frame callback to avoid setState during build
           Future.microtask(() {
@@ -592,77 +684,85 @@ class _MatchScreenState extends State<MatchScreen>
           body: userProvider.allUsersState == UserState.loading
               ? Center(child: CircularProgressIndicator())
               : userProvider.allUsersState == UserState.error
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        userProvider.allUsersErrorMessage ??
+                            'Error al cargar usuarios',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadUsers,
+                        child: Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: Spacing.padding,
+                        vertical: 12,
+                      ),
+                      child: Row(
                         children: [
-                          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-                          SizedBox(height: 16),
-                          Text(
-                            userProvider.allUsersErrorMessage ?? 'Error al cargar usuarios',
-                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                            textAlign: TextAlign.center,
+                          Expanded(
+                            child: _buildFilterButton(
+                              selectedCareer ?? 'Carrera',
+                              () => _showFilterModal('career', allUsers),
+                              selectedCareer != null,
+                            ),
                           ),
-                          SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadUsers,
-                            child: Text('Reintentar'),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: _buildFilterButton(
+                              selectedSemester ?? 'Semestre',
+                              () => _showFilterModal('semester', allUsers),
+                              selectedSemester != null,
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: _buildFilterButton(
+                              selectedInterest ?? 'Intereses',
+                              () => _showFilterModal('interest', allUsers),
+                              selectedInterest != null,
+                            ),
                           ),
                         ],
                       ),
-                    )
-                  : Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: Spacing.padding,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _buildFilterButton(
-                                  selectedCareer ?? 'Carrera',
-                                  () => _showFilterModal('career', allUsers),
-                                  selectedCareer != null,
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: _buildFilterButton(
-                                  selectedSemester ?? 'Semestre',
-                                  () => _showFilterModal('semester', allUsers),
-                                  selectedSemester != null,
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: _buildFilterButton(
-                                  selectedInterest ?? 'Intereses',
-                                  () => _showFilterModal('interest', allUsers),
-                                  selectedInterest != null,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.all(Spacing.padding),
-                            child: hasUsers && currentUser != null
-                                ? _buildSwipeableCard(currentUser)
-                                : Center(
-                                    child: Text(
-                                      allUsers.isEmpty
-                                          ? 'No hay usuarios disponibles'
-                                          : 'No hay más usuarios con estos filtros',
-                                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
                     ),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.all(Spacing.padding),
+                        child: hasUsers && currentUser != null
+                            ? _buildSwipeableCard(currentUser)
+                            : Center(
+                                child: Text(
+                                  allUsers.isEmpty
+                                      ? 'No hay usuarios disponibles'
+                                      : 'No hay más usuarios con estos filtros',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
         );
       },
     );
@@ -822,7 +922,7 @@ class _MatchScreenState extends State<MatchScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '${user.name}, ${user.age}',
+                      '${user.name} ${user.age != 0 ? ', ${user.age}' : ''}',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,
@@ -831,7 +931,9 @@ class _MatchScreenState extends State<MatchScreen>
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '${user.career}, ${user.semester}',
+                      '${user.career.isNotEmpty ? user.career : ''}'
+                      '${user.career.isNotEmpty && user.semester != 0 ? ', ' : ''}'
+                      '${user.semester != 0 ? '${user.semester}° semestre' : ''}',
                       style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                     SizedBox(height: 12),

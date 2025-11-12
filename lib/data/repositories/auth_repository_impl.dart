@@ -122,7 +122,7 @@ class AuthRepositoryImpl implements AuthRepository {
       case 'weak-password':
         return 'The password is too weak.';
       case 'invalid-credential':
-        return 'Invalid email or password. Please check your credentials and try again.';
+        return 'Correo o contraseña incorrectos. Verifica tus credenciales e intenta de nuevo.';
       case 'user-disabled':
         return 'User is disabled.';
       case 'too-many-requests':

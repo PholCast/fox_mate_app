@@ -14,11 +14,11 @@ class UpdateProfileUseCase {
   }) async {
     try {
       if (name.isEmpty) {
-        return 'Name is required';
+        return 'El nombre es requerido';
       }
 
       if (email.isEmpty) {
-        return 'Email is required';
+        return 'El correo es requerido';
       }
 
       if (!isValidEmail(email)) {
@@ -29,7 +29,7 @@ class UpdateProfileUseCase {
       await _userRepository.updateUserProfile(updatedUser);
       return null;
     } catch (e) {
-      return 'Failed to update profile: ${e.toString()}';
+      return 'Error al actualizar el perfil: ${e.toString()}';
     }
   }
 }

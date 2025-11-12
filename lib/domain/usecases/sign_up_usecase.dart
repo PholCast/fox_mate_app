@@ -19,7 +19,7 @@ class SignUpUsecase {
         email.isEmpty ||
         password.isEmpty ||
         confirmPassword.isEmpty) {
-      return AuthResult.failure('All fields are required');
+      return AuthResult.failure('Todos los campos son obligatorios');
     }
 
     if (!isValidEmail(email)) {
@@ -27,11 +27,11 @@ class SignUpUsecase {
     }
 
     if (password.length < 6) {
-      return AuthResult.failure('Password must be at least 6 characters long');
+      return AuthResult.failure('La contraseña debe tener al menos 6 caracteres');
     }
 
     if (password != confirmPassword) {
-      return AuthResult.failure('Passwords do not match');
+      return AuthResult.failure('Las contraseñas no coinciden');
     }
 
     final authResult = await _authRepository.signUp(name, email, password);

@@ -17,11 +17,11 @@ class CreatePostUsecase {
     File? image,
   }) async {
     if (content.trim().isEmpty) {
-      throw Exception('Content cannot be empty');
+      throw Exception('El contenido no puede estar vacío');
     }
 
     if (tags.isEmpty) {
-      throw Exception('At least one tag is required');
+      throw Exception('Es necesario incluir una etiqueta');
     }
 
     return await _postRepository.createPost(

@@ -9,4 +9,5 @@ abstract class UserRepository {
   Future<void> deleteUserProfile(String userId);
   Future<List<UserEntity>> getAllUsers();
   Future<String> uploadProfileImage(File image, String userId);
+  Future<List<UserEntity>> getUsersNotLikedBy(String userId);
 }

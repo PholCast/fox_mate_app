@@ -121,12 +121,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Sign out
       await authProvider.signOut();
 
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-          (route) => false,
-        );
-      }
     }
   }
 

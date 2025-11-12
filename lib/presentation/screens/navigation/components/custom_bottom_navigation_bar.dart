@@ -55,10 +55,10 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   ),
                   NavigationIcon(
                     badgeCount: notificationsProvider.unreadNotificationsCount,
-                    label: 'Chats',
+                    label: 'Notificación',
                     icon: navigationProvider.currentIndex == 3
-                        ? const Icon(Icons.chat_bubble, color: CustomColors.primaryColor, size: 28)
-                        : Icon(Icons.chat_bubble_outline, color: Colors.grey[600], size: 28),
+                        ? const Icon(Icons.notifications, color: CustomColors.primaryColor, size: 28)
+                        : Icon(Icons.notifications_outlined, color: Colors.grey[600], size: 28),
                     isSelected: navigationProvider.currentIndex == 3,
                     onTap: () => navigationProvider.navigateToIndex(3),
                   ),

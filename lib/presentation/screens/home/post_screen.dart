@@ -4,7 +4,6 @@ import 'package:fox_mate_app/constants/spacing.dart';
 import 'package:fox_mate_app/domain/entities/post_entity.dart';
 import 'package:fox_mate_app/presentation/screens/create/create_post_screen.dart';
 import 'package:fox_mate_app/presentation/screens/home/widgets/post_card.dart';
-import 'package:fox_mate_app/providers/auth_provider.dart';
 import 'package:fox_mate_app/providers/post_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -204,20 +203,6 @@ class _PostScreenState extends State<PostScreen> {
           ),
         ),
         actions: [
-          Consumer<AuthProvider>(
-            builder: (context, authProvider, _) {
-              return IconButton(
-                icon: const Icon(
-                  Icons.logout_outlined,
-                  color: CustomColors.primaryColor,
-                  size: 30,
-                ),
-                onPressed: () async {
-                  await authProvider.signOut();
-                },
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(
               Icons.add_circle_outline_sharp,

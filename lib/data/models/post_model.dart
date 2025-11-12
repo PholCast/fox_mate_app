@@ -56,38 +56,3 @@ class PostModel extends PostEntity {
     );
   }
 }
-
-// Mantén esta función para testing, pero ya no será necesaria en producción
-List<PostModel> getDummyPosts() {
-  return [
-    PostModel(
-      id: '1',
-      authorId: 'dummy1',
-      authorName: 'Ana Pérez',
-      authorInitials: 'AP',
-      content: 'Alguien tiene apuntes de la clase de Microeconomía? Los necesito urgente!',
-      tags: ['Apuntes', 'Microeconomia', 'Académico'],
-      timestamp: DateTime.now().subtract(Duration(hours: 2)),
-    ),
-    PostModel(
-      id: '2',
-      authorId: 'dummy2',
-      authorName: 'Carlos Gómez',
-      authorInitials: 'CG',
-      content: '¡Fiesta de bienvenida en la residencia X este viernes!',
-      imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800',
-      tags: ['Fiesta', 'Social'],
-      timestamp: DateTime.now().subtract(Duration(hours: 5)),
-    ),
-    PostModel(
-      id: '3',
-      authorId: 'dummy3',
-      authorName: 'María López',
-      authorInitials: 'ML',
-      content: 'Vendo libros de Cálculo I y II, en excelente estado. Precio negociable.',
-      imageUrl: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800',
-      tags: ['Venta', 'Libros', 'Académico'],
-      timestamp: DateTime.now().subtract(Duration(hours: 8)),
-    ),
-  ];
-}

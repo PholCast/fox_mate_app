@@ -184,10 +184,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _confirmPasswordController,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
+                        return 'Por favor confirma tu contraseña';
                       }
                       if (value != _passwordController.text) {
-                        return 'Passwords do not match';
+                        return 'Las contraseñas no coinciden';
                       }
                       return null;
                     },
