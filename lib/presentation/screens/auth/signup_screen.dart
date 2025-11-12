@@ -124,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _nameController,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter a name';
+                        return 'Por favor ingresa el nombre';
                       }
                       return null;
                     },
@@ -140,7 +140,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _emailController,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter an email';
+                        return 'Por favor ingresa el correo';
                       }
                       return null;
                     },
@@ -162,10 +162,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     maxLines: 1,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
+                        return 'Por favor ingresa la contraseña';
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters long';
+                        return 'La contraseña debe tener al menos 6 caracteres';
                       }
                       return null;
                     },

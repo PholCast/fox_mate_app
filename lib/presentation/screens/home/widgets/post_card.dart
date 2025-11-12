@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import 'package:fox_mate_app/constants/custom_colors.dart';
 import 'package:fox_mate_app/domain/entities/post_entity.dart';
 import 'package:fox_mate_app/presentation/screens/home/post_detail_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostCard extends StatelessWidget {
   final PostEntity post;
@@ -36,9 +37,27 @@ class PostCard extends StatelessWidget {
     }
   }
 
+  /// Obtiene la imagen de perfil actualizada del usuario desde Firestore
+  Future<String?> _getUserProfileImage(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (doc.exists) {
+        final data = doc.data();
+        return data?['imageUrl'] as String?;
+      }
+      return null;
+    } catch (e) {
+      // Si hay error, retornar null para usar el fallback
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ✨ NUEVO: GestureDetector para navegar al detalle
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -66,28 +85,37 @@ class PostCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                if (post.authorProfileImage != null &&
-                    post.authorProfileImage!.isNotEmpty)
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: NetworkImage(post.authorProfileImage!),
-                    onBackgroundImageError: (exception, stackTrace) {
-                      // Manejar error de carga de imagen silenciosamente
-                    },
-                  )
-                else
-                  CircleAvatar(
-                    backgroundColor: CustomColors.primaryColor,
-                    radius: 20,
-                    child: Text(
-                      post.authorInitials,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+                // Avatar con FutureBuilder para cargar imagen actualizada
+                FutureBuilder<String?>(
+                  future: _getUserProfileImage(post.authorId),
+                  builder: (context, snapshot) {
+                    // Usar la imagen del snapshot si está disponible, sino la del post
+                    final profileImage = snapshot.data ?? post.authorProfileImage;
+                    
+                    if (profileImage != null && profileImage.isNotEmpty) {
+                      return CircleAvatar(
+                        radius: 20,
+                        backgroundImage: NetworkImage(profileImage),
+                        onBackgroundImageError: (exception, stackTrace) {
+                          // Manejar error de carga de imagen silenciosamente
+                        },
+                      );
+                    } else {
+                      return CircleAvatar(
+                        backgroundColor: CustomColors.primaryColor,
+                        radius: 20,
+                        child: Text(
+                          post.authorInitials,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -111,7 +139,6 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
                 if (showMenu && onMenuPressed != null)
-                  // ✨ NUEVO: GestureDetector para que el menú no active la navegación
                   GestureDetector(
                     onTap: () {
                       // Evitar que el tap del menú active la navegación
@@ -132,8 +159,8 @@ class PostCard extends StatelessWidget {
             Text(
               post.content,
               style: const TextStyle(fontSize: 15, height: 1.4),
-              maxLines: 4, // ✨ NUEVO: Limitar a 4 líneas en el card
-              overflow: TextOverflow.ellipsis, // ✨ NUEVO: Mostrar ... si es muy largo
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
             ),
             if (post.imageUrl != null) ...[
               const SizedBox(height: 12),
@@ -144,7 +171,6 @@ class PostCard extends StatelessWidget {
                   width: double.infinity,
                   height: 200,
                   fit: BoxFit.cover,
-                  // ✨ NUEVO: Loading indicator
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
                     return Container(
@@ -164,7 +190,6 @@ class PostCard extends StatelessWidget {
                       ),
                     );
                   },
-                  // ✨ NUEVO: Error handling
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       height: 200,
@@ -211,7 +236,7 @@ class PostCard extends StatelessWidget {
                   child: Text(
                     '#$tag',
                     style: const TextStyle(
-                      color: CustomColors.secondaryColor,
+                      color: Color(0xFF10B981),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
