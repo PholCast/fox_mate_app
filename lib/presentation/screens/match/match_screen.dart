@@ -58,6 +58,26 @@ class _MatchScreenState extends State<MatchScreen>
     }
   }
 
+Future<void> _handleRefresh() async {
+  final authProvider = context.read<AuthProvider>();
+  final userProvider = context.read<UserProvider>();
+  final currentUser = authProvider.currentUser;
+
+  if (currentUser != null) {
+    await userProvider.loadUnlikedUsers(currentUser.id);
+    if (mounted) {
+      setState(() {
+        filteredUsers = List.from(userProvider.allUsers);
+        currentIndex = 0; // Reset to first user
+        // Clear filters
+        selectedCareer = null;
+        selectedSemester = null;
+        selectedInterest = null;
+      });
+    }
+  }
+}
+
   @override
   void dispose() {
     _swipeAnimationController?.dispose();
@@ -305,108 +325,6 @@ class _MatchScreenState extends State<MatchScreen>
       ),
     );
   }
-
-  // Future<void> _handleSwipe(bool isLike) async {
-  //   if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
-
-  //   final currentUser = filteredUsers[currentIndex];
-  //   final authProvider = context.read<AuthProvider>();
-  //   final currentUserId = authProvider.currentUser?.id;
-
-  //   if (currentUserId == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('Error: Usuario no autenticado'),
-  //         backgroundColor: Colors.red,
-  //       ),
-  //     );
-  //     return;
-  //   }
-
-  //   if (isLike) {
-  //     // Show loading indicator
-  //     showDialog(
-  //       context: context,
-  //       barrierDismissible: false,
-  //       builder: (context) => const Center(child: CircularProgressIndicator()),
-  //     );
-
-  //     try {
-  //       final likeUserUseCase = context.read<LikeUserUseCase>();
-  //       final isMatch = await likeUserUseCase.execute(
-  //         currentUserId: currentUserId,
-  //         likedUserId: currentUser.id,
-  //       );
-
-  //       // Close loading indicator
-  //       if (mounted) {
-  //         Navigator.pop(context);
-  //       }
-
-  //       // Move to next user
-  //       setState(() {
-  //         if (currentIndex < filteredUsers.length - 1) {
-  //           currentIndex++;
-  //         } else {
-  //           currentIndex = 0;
-  //         }
-  //         dragPosition = Offset.zero;
-  //         isDragging = false;
-  //       });
-
-  //       // Show match dialog only if there's a mutual match
-  //       if (isMatch && mounted) {
-  //         _showMatchDialog(currentUser);
-  //       } else if (mounted) {
-  //         // Show a simple like confirmation
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(
-  //             content: Text('Le diste like a ${currentUser.name}'),
-  //             backgroundColor: Colors.green,
-  //             duration: const Duration(seconds: 2),
-  //           ),
-  //         );
-  //       }
-  //     } catch (e) {
-  //       // Close loading indicator
-  //       if (mounted) {
-  //         Navigator.pop(context);
-  //       }
-
-  //       // Move to next user even on error
-  //       setState(() {
-  //         if (currentIndex < filteredUsers.length - 1) {
-  //           currentIndex++;
-  //         } else {
-  //           currentIndex = 0;
-  //         }
-  //         dragPosition = Offset.zero;
-  //         isDragging = false;
-  //       });
-
-  //       if (mounted) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(
-  //             content: Text('Error: ${e.toString()}'),
-  //             backgroundColor: Colors.red,
-  //           ),
-  //         );
-  //       }
-  //     }
-  //   } else {
-  //     // Just move to next user for dislike
-  //     setState(() {
-  //       if (currentIndex < filteredUsers.length - 1) {
-  //         currentIndex++;
-  //       } else {
-  //         currentIndex = 0;
-  //       }
-  //       dragPosition = Offset.zero;
-  //       isDragging = false;
-  //     });
-  //   }
-  // }
-
 Future<void> _handleSwipe(bool isLike) async {
   if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
 
@@ -520,6 +438,7 @@ Future<void> _handleSwipe(bool isLike) async {
     userProvider.removeUserFromList(currentUser.id);
   }
 }
+
 
 
   void _showMatchDialog(UserEntity matchedUser) {
@@ -642,132 +561,169 @@ Future<void> _handleSwipe(bool isLike) async {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer2<AuthProvider, UserProvider>(
-      builder: (context, authProvider, userProvider, child) {
-        final allUsers = userProvider.allUsers;
-        final hasUsers =
-            filteredUsers.isNotEmpty && currentIndex < filteredUsers.length;
-        final currentUser = hasUsers ? filteredUsers[currentIndex] : null;
+Widget build(BuildContext context) {
+  return Consumer2<AuthProvider, UserProvider>(
+    builder: (context, authProvider, userProvider, child) {
+      final allUsers = userProvider.allUsers;
+      final hasUsers =
+          filteredUsers.isNotEmpty && currentIndex < filteredUsers.length;
+      final currentUser = hasUsers ? filteredUsers[currentIndex] : null;
 
-        // Apply filters when allUsers is loaded and no filters are applied yet
-        if (allUsers.isNotEmpty &&
-            filteredUsers.isEmpty &&
-            selectedCareer == null &&
-            selectedSemester == null &&
-            selectedInterest == null) {
-          // Use a post-frame callback to avoid setState during build
-          Future.microtask(() {
-            if (mounted) {
-              applyFilters(allUsers);
-            }
-          });
-        }
+      // Apply filters when allUsers is loaded and no filters are applied yet
+      if (allUsers.isNotEmpty &&
+          filteredUsers.isEmpty &&
+          selectedCareer == null &&
+          selectedSemester == null &&
+          selectedInterest == null) {
+        // Use a post-frame callback to avoid setState during build
+        Future.microtask(() {
+          if (mounted) {
+            applyFilters(allUsers);
+          }
+        });
+      }
 
-        return Scaffold(
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
           backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            automaticallyImplyLeading: false,
-            centerTitle: true,
-            title: Text(
-              'Match',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          title: Text(
+            'Match',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          body: userProvider.allUsersState == UserState.loading
-              ? Center(child: CircularProgressIndicator())
-              : userProvider.allUsersState == UserState.error
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        userProvider.allUsersErrorMessage ??
-                            'Error al cargar usuarios',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadUsers,
-                        child: Text('Reintentar'),
-                      ),
-                    ],
-                  ),
-                )
-              : Column(
+        ),
+        body: userProvider.allUsersState == UserState.loading
+            ? Center(child: CircularProgressIndicator())
+            : userProvider.allUsersState == UserState.error
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: Spacing.padding,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildFilterButton(
-                              selectedCareer ?? 'Carrera',
-                              () => _showFilterModal('career', allUsers),
-                              selectedCareer != null,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: _buildFilterButton(
-                              selectedSemester ?? 'Semestre',
-                              () => _showFilterModal('semester', allUsers),
-                              selectedSemester != null,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: _buildFilterButton(
-                              selectedInterest ?? 'Intereses',
-                              () => _showFilterModal('interest', allUsers),
-                              selectedInterest != null,
-                            ),
-                          ),
-                        ],
-                      ),
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.grey[400],
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.all(Spacing.padding),
-                        child: hasUsers && currentUser != null
-                            ? _buildSwipeableCard(currentUser)
-                            : Center(
-                                child: Text(
-                                  allUsers.isEmpty
-                                      ? 'No hay usuarios disponibles'
-                                      : 'No hay más usuarios con estos filtros',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ),
-                      ),
+                    SizedBox(height: 16),
+                    Text(
+                      userProvider.allUsersErrorMessage ??
+                          'Error al cargar usuarios',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadUsers,
+                      child: Text('Reintentar'),
                     ),
                   ],
                 ),
-        );
-      },
-    );
-  }
-
+              )
+            : Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Spacing.padding,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildFilterButton(
+                            selectedCareer ?? 'Carrera',
+                            () => _showFilterModal('career', allUsers),
+                            selectedCareer != null,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: _buildFilterButton(
+                            selectedSemester ?? 'Semestre',
+                            () => _showFilterModal('semester', allUsers),
+                            selectedSemester != null,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: _buildFilterButton(
+                            selectedInterest ?? 'Intereses',
+                            () => _showFilterModal('interest', allUsers),
+                            selectedInterest != null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // AQUÍ ESTÁ EL CAMBIO PRINCIPAL - RefreshIndicator envuelve todo
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      color: CustomColors.primaryColor,
+                      child: hasUsers && currentUser != null
+                          ? Padding(
+                              padding: EdgeInsets.all(Spacing.padding),
+                              child: _buildSwipeableCard(currentUser),
+                            )
+                          : SingleChildScrollView(
+                              physics: AlwaysScrollableScrollPhysics(),
+                              child: Container(
+                                height: MediaQuery.of(context).size.height * 0.6,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.search_off,
+                                        size: 64,
+                                        color: Colors.grey[400],
+                                      ),
+                                      SizedBox(height: 16),
+                                      Text(
+                                        allUsers.isEmpty
+                                            ? 'No hay usuarios disponibles'
+                                            : 'No hay más usuarios con estos filtros',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      SizedBox(height: 16),
+                                      TextButton.icon(
+                                        onPressed: _handleRefresh,
+                                        icon: Icon(
+                                          Icons.refresh,
+                                          color: CustomColors.primaryColor,
+                                        ),
+                                        label: Text(
+                                          'Recargar',
+                                          style: TextStyle(
+                                            color: CustomColors.primaryColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+      );
+    },
+  );
+}
   Widget _buildSwipeableCard(UserEntity user) {
     final screenWidth = MediaQuery.of(context).size.width;
     final threshold = screenWidth * 0.3;
@@ -780,7 +736,10 @@ Future<void> _handleSwipe(bool isLike) async {
       },
       onPanUpdate: (details) {
         setState(() {
-          dragPosition += details.delta;
+          dragPosition = Offset(
+      dragPosition.dx + details.delta.dx,
+      0, 
+    );
         });
       },
       onPanEnd: (details) {
