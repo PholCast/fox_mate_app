@@ -48,7 +48,7 @@ class _MatchScreenState extends State<MatchScreen>
     final currentUser = authProvider.currentUser;
 
     if (currentUser != null) {
-      userProvider.loadAllUsers(currentUser.id).then((_) {
+      userProvider.loadUnlikedUsers(currentUser.id).then((_) {
         if (mounted) {
           setState(() {
             filteredUsers = List.from(userProvider.allUsers);
@@ -306,106 +306,221 @@ class _MatchScreenState extends State<MatchScreen>
     );
   }
 
-  Future<void> _handleSwipe(bool isLike) async {
-    if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
+  // Future<void> _handleSwipe(bool isLike) async {
+  //   if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
 
-    final currentUser = filteredUsers[currentIndex];
-    final authProvider = context.read<AuthProvider>();
-    final currentUserId = authProvider.currentUser?.id;
+  //   final currentUser = filteredUsers[currentIndex];
+  //   final authProvider = context.read<AuthProvider>();
+  //   final currentUserId = authProvider.currentUser?.id;
 
-    if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Usuario no autenticado'),
-          backgroundColor: Colors.red,
-        ),
+  //   if (currentUserId == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Error: Usuario no autenticado'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   if (isLike) {
+  //     // Show loading indicator
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (context) => const Center(child: CircularProgressIndicator()),
+  //     );
+
+  //     try {
+  //       final likeUserUseCase = context.read<LikeUserUseCase>();
+  //       final isMatch = await likeUserUseCase.execute(
+  //         currentUserId: currentUserId,
+  //         likedUserId: currentUser.id,
+  //       );
+
+  //       // Close loading indicator
+  //       if (mounted) {
+  //         Navigator.pop(context);
+  //       }
+
+  //       // Move to next user
+  //       setState(() {
+  //         if (currentIndex < filteredUsers.length - 1) {
+  //           currentIndex++;
+  //         } else {
+  //           currentIndex = 0;
+  //         }
+  //         dragPosition = Offset.zero;
+  //         isDragging = false;
+  //       });
+
+  //       // Show match dialog only if there's a mutual match
+  //       if (isMatch && mounted) {
+  //         _showMatchDialog(currentUser);
+  //       } else if (mounted) {
+  //         // Show a simple like confirmation
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text('Le diste like a ${currentUser.name}'),
+  //             backgroundColor: Colors.green,
+  //             duration: const Duration(seconds: 2),
+  //           ),
+  //         );
+  //       }
+  //     } catch (e) {
+  //       // Close loading indicator
+  //       if (mounted) {
+  //         Navigator.pop(context);
+  //       }
+
+  //       // Move to next user even on error
+  //       setState(() {
+  //         if (currentIndex < filteredUsers.length - 1) {
+  //           currentIndex++;
+  //         } else {
+  //           currentIndex = 0;
+  //         }
+  //         dragPosition = Offset.zero;
+  //         isDragging = false;
+  //       });
+
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text('Error: ${e.toString()}'),
+  //             backgroundColor: Colors.red,
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } else {
+  //     // Just move to next user for dislike
+  //     setState(() {
+  //       if (currentIndex < filteredUsers.length - 1) {
+  //         currentIndex++;
+  //       } else {
+  //         currentIndex = 0;
+  //       }
+  //       dragPosition = Offset.zero;
+  //       isDragging = false;
+  //     });
+  //   }
+  // }
+
+Future<void> _handleSwipe(bool isLike) async {
+  if (filteredUsers.isEmpty || currentIndex >= filteredUsers.length) return;
+
+  final currentUser = filteredUsers[currentIndex];
+  final authProvider = context.read<AuthProvider>();
+  final currentUserId = authProvider.currentUser?.id;
+
+  if (currentUserId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error: Usuario no autenticado'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  if (isLike) {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final likeUserUseCase = context.read<LikeUserUseCase>();
+      final isMatch = await likeUserUseCase.execute(
+        currentUserId: currentUserId,
+        likedUserId: currentUser.id,
       );
-      return;
-    }
 
-    if (isLike) {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-
-      try {
-        final likeUserUseCase = context.read<LikeUserUseCase>();
-        final isMatch = await likeUserUseCase.execute(
-          currentUserId: currentUserId,
-          likedUserId: currentUser.id,
-        );
-
-        // Close loading indicator
-        if (mounted) {
-          Navigator.pop(context);
-        }
-
-        // Move to next user
-        setState(() {
-          if (currentIndex < filteredUsers.length - 1) {
-            currentIndex++;
-          } else {
-            currentIndex = 0;
-          }
-          dragPosition = Offset.zero;
-          isDragging = false;
-        });
-
-        // Show match dialog only if there's a mutual match
-        if (isMatch && mounted) {
-          _showMatchDialog(currentUser);
-        } else if (mounted) {
-          // Show a simple like confirmation
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Le diste like a ${currentUser.name}'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      } catch (e) {
-        // Close loading indicator
-        if (mounted) {
-          Navigator.pop(context);
-        }
-
-        // Move to next user even on error
-        setState(() {
-          if (currentIndex < filteredUsers.length - 1) {
-            currentIndex++;
-          } else {
-            currentIndex = 0;
-          }
-          dragPosition = Offset.zero;
-          isDragging = false;
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      // Close loading indicator
+      if (mounted) {
+        Navigator.pop(context);
       }
-    } else {
-      // Just move to next user for dislike
+
+      // Remove the liked user from both lists
       setState(() {
-        if (currentIndex < filteredUsers.length - 1) {
-          currentIndex++;
-        } else {
+        filteredUsers.removeAt(currentIndex);
+        
+        // Keep the same index or reset to 0 if we're at the end
+        if (currentIndex >= filteredUsers.length && filteredUsers.isNotEmpty) {
           currentIndex = 0;
         }
         dragPosition = Offset.zero;
         isDragging = false;
       });
+      
+      // Remove from provider's list (this will trigger notifyListeners)
+      final userProvider = context.read<UserProvider>();
+      userProvider.removeUserFromList(currentUser.id);
+
+      // Show match dialog only if there's a mutual match
+      if (isMatch && mounted) {
+        _showMatchDialog(currentUser);
+      } else if (mounted) {
+        // Show a simple like confirmation
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Le diste like a ${currentUser.name}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading indicator
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Still remove the user from both lists even on error
+      setState(() {
+        filteredUsers.removeAt(currentIndex);
+        
+        if (currentIndex >= filteredUsers.length && filteredUsers.isNotEmpty) {
+          currentIndex = 0;
+        }
+        dragPosition = Offset.zero;
+        isDragging = false;
+      });
+      
+      // Remove from provider's list (this will trigger notifyListeners)
+      final userProvider = context.read<UserProvider>();
+      userProvider.removeUserFromList(currentUser.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
+  } else {
+    // For dislike, also remove from both lists
+    setState(() {
+      filteredUsers.removeAt(currentIndex);
+      
+      if (currentIndex >= filteredUsers.length && filteredUsers.isNotEmpty) {
+        currentIndex = 0;
+      }
+      dragPosition = Offset.zero;
+      isDragging = false;
+    });
+    
+    // Remove from provider's list (this will trigger notifyListeners)
+    final userProvider = context.read<UserProvider>();
+    userProvider.removeUserFromList(currentUser.id);
   }
+}
+
 
   void _showMatchDialog(UserEntity matchedUser) {
     showDialog(

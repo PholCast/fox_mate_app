@@ -120,4 +120,43 @@ class UserRepositoryImpl extends UserRepository {
       throw Exception('Error uploading profile image: ${e.toString()}');
     }
   }
+
+  // Agregar este método a UserRepositoryImpl
+
+@override
+Future<List<UserEntity>> getUsersNotLikedBy(String userId) async {
+  try {
+    // 1. Obtener todos los usuarios
+    final allUsersSnapshot = await _firestore.collection(_collectionName).get();
+    
+    // 2. Obtener todos los likes del usuario actual
+    final likesSnapshot = await _firestore
+        .collection('likes')
+        .where('userId', isEqualTo: userId)
+        .get();
+    
+    // 3. Crear un Set con los IDs de usuarios que ya han recibido like
+    final likedUserIds = likesSnapshot.docs
+        .map((doc) => doc.data()['likedUserId'] as String)
+        .toSet();
+    
+    // 4. Filtrar usuarios: excluir al usuario actual y a los que ya tienen like
+    final filteredUsers = allUsersSnapshot.docs
+        .where((doc) {
+          final docId = doc.id;
+          return docId != userId && !likedUserIds.contains(docId);
+        })
+        .map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return UserModel.fromJson(data);
+        })
+        .toList();
+    
+    return filteredUsers;
+  } catch (e) {
+    print('Failed to get users not liked: ${e.toString()}');
+    throw Exception('Failed to get users not liked: ${e.toString()}');
+  }
+}
 }
